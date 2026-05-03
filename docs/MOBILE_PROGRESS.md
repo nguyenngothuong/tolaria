@@ -26,6 +26,7 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Added package-local Vitest and TypeScript scripts for the shared Markdown package.
 - Added `scripts/run-tests.mjs` so `pnpm test` runs desktop and shared-package tests, while targeted test arguments remain targeted.
 - Updated the pre-commit branch guard to allow local commits on `codex/mobile` for this isolated mobile worktree.
+- Split `src/utils/wikilinks.ts` into shared `@tolaria/markdown` modules for frontmatter, wikilink block transforms, outgoing links, backlink context, snippets, and word counts.
 
 ## Next Action
 
@@ -51,6 +52,12 @@ Continue Phase 1 with the next low-risk shared extraction:
 - `pnpm lint` passed with one pre-existing warning in `src/components/tolariaBlockNoteSideMenu.tsx`.
 - `npx tsc --noEmit` passed.
 - `pnpm build` passed.
+- CodeScene before wikilink extraction: `src/utils/wikilinks.ts` scored `9.09`.
+- CodeScene after wikilink extraction: new shared wikilink/frontmatter/content files scored `10`; small export surfaces returned no scorable code and no findings.
+- `pnpm --filter @tolaria/markdown test` passed after wikilink extraction: 40 tests.
+- `pnpm test -- src/utils/wikilinks.test.ts src/utils/noteTitle.test.ts` passed: 91 desktop tests.
+- `pnpm --filter @tolaria/markdown typecheck` passed after wikilink extraction.
+- `pnpm lint`, `npx tsc --noEmit`, and `pnpm build` passed after wikilink extraction.
 
 ## Risks / Watch Items
 
