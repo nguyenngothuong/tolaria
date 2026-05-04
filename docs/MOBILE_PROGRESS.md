@@ -72,6 +72,7 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Replaced the demo vault's hardcoded identity with the shared default vault metadata boundary.
 - Wired mobile runtime loading through the persisted vault metadata catalog boundary, so app state, note loading, autosave, note creation, and deletion all operate against the active vault metadata.
 - Extracted runtime loading into a hook plus tested pure loader to keep `MobileApp.tsx` at CodeScene `10.0`.
+- Added first-class runtime vault load failure state with a visible retry notice in the note list, replacing the previous silent failure path.
 
 ## Next Action
 
@@ -79,7 +80,7 @@ Continue Phase 3 with app-managed vault storage hardening:
 
 1. Add a focused simulator interaction path for create/open/edit/autosave/delete once Expo Go's overlay no longer blocks clean screenshots.
 2. Decide whether archive should be modeled as a first-class note state or deferred until the mobile vault schema exists.
-3. Add first-class error/retry state for vault runtime load failures instead of silently falling back to fixture notes.
+3. Add a small runtime empty-vault state once user-created blank vaults exist.
 
 ## Verification Log
 
@@ -248,6 +249,11 @@ Continue Phase 3 with app-managed vault storage hardening:
 - CodeScene after runtime vault metadata wiring: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/mobileDemoVault.ts`, `apps/mobile/src/mobileVaultRuntime.ts`, and `apps/mobile/src/mobileVaultRuntime.test.ts` scored `10`; `apps/mobile/src/useMobileVaultRuntimeLoader.ts` returned no scorable code and no findings.
 - `pnpm --filter @tolaria/mobile test` passed after runtime vault metadata wiring: 22 files / 70 tests.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after runtime vault metadata wiring.
+- `pnpm --filter @tolaria/mobile test -- src/mobileVaultRuntime.test.ts` passed after runtime load retry UI: 22 files / 70 tests.
+- `pnpm --filter @tolaria/mobile typecheck` passed after runtime load retry UI.
+- CodeScene after runtime load retry UI: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/styles/noteListStyles.ts`, and `apps/mobile/src/styles/vaultLoadStyles.ts` scored `10`; `apps/mobile/src/useMobileVaultRuntimeLoader.ts` returned no scorable code and no findings.
+- `pnpm --filter @tolaria/mobile test` passed after runtime load retry UI: 22 files / 70 tests.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after runtime load retry UI.
 
 ## Risks / Watch Items
 

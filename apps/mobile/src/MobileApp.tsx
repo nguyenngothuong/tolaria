@@ -83,7 +83,7 @@ export function MobileApp() {
     setCompactNavigation((state) => selectLoadedNote(state, notes, selectedNoteId))
   }, [])
 
-  useMobileVaultRuntimeLoader({
+  const runtimeLoader = useMobileVaultRuntimeLoader({
     appStateStorage,
     loadNotes: loadDemoVaultNotes,
     metadataStorage: vaultMetadataStorage,
@@ -127,9 +127,11 @@ export function MobileApp() {
               createNoteTitle={createFlow.title}
               isCreatePromptOpen={createFlow.isPromptOpen}
               isCreatingNote={createFlow.isCreating}
+              runtimeLoadFailed={runtimeLoader.failed}
               onCancelCreateNote={createFlow.cancel}
               onChangeCreateNoteTitle={createFlow.setTitle}
               onOpenCreateNote={createFlow.open}
+              onRetryRuntimeLoad={runtimeLoader.retry}
               onSubmitCreateNote={createFlow.submit}
               onSelectNote={selectNote}
             />
@@ -155,9 +157,11 @@ export function MobileApp() {
             createNoteTitle={createFlow.title}
             isCreatePromptOpen={createFlow.isPromptOpen}
             isCreatingNote={createFlow.isCreating}
+            runtimeLoadFailed={runtimeLoader.failed}
             onCancelCreateNote={createFlow.cancel}
             onChangeCreateNoteTitle={createFlow.setTitle}
             onOpenCreateNote={createFlow.open}
+            onRetryRuntimeLoad={runtimeLoader.retry}
             onSubmitCreateNote={createFlow.submit}
             onSelectNote={selectNote}
           />
@@ -179,9 +183,11 @@ function CompactShell({
   createNoteTitle,
   isCreatePromptOpen,
   isCreatingNote,
+  runtimeLoadFailed,
   onCancelCreateNote,
   onChangeCreateNoteTitle,
   onOpenCreateNote,
+  onRetryRuntimeLoad,
   onSubmitCreateNote,
   onSelectNote,
   selectedNoteId,
@@ -194,12 +200,14 @@ function CompactShell({
   createNoteTitle: string
   isCreatePromptOpen: boolean
   isCreatingNote: boolean
+  runtimeLoadFailed: boolean
   onNavigate: (event: CompactNavigationEvent) => void
   onDeleteNote?: () => void
   onDraftChange: (draft: MobileEditorDraft) => void
   onCancelCreateNote: () => void
   onChangeCreateNoteTitle: (title: string) => void
   onOpenCreateNote: () => void
+  onRetryRuntimeLoad: () => void
   onSubmitCreateNote: () => void
   onSelectNote: (note: MobileNote) => void
   selectedNoteId: string
@@ -244,10 +252,12 @@ function CompactShell({
         createNoteTitle={createNoteTitle}
         isCreatePromptOpen={isCreatePromptOpen}
         isCreatingNote={isCreatingNote}
+        runtimeLoadFailed={runtimeLoadFailed}
         onCancelCreateNote={onCancelCreateNote}
         onChangeCreateNoteTitle={onChangeCreateNoteTitle}
         onOpenCreateNote={onOpenCreateNote}
         onOpenSidebar={() => onNavigate({ type: 'openSidebar' })}
+        onRetryRuntimeLoad={onRetryRuntimeLoad}
         onSelectNote={onSelectNote}
         onSubmitCreateNote={onSubmitCreateNote}
       />
@@ -294,10 +304,12 @@ function NoteListPanel({
   createNoteTitle,
   isCreatePromptOpen,
   isCreatingNote,
+  runtimeLoadFailed,
   onCancelCreateNote,
   onChangeCreateNoteTitle,
   onOpenCreateNote,
   onOpenSidebar,
+  onRetryRuntimeLoad,
   onSelectNote,
   onSubmitCreateNote,
   selectedNoteId,
@@ -307,10 +319,12 @@ function NoteListPanel({
   createNoteTitle: string
   isCreatePromptOpen: boolean
   isCreatingNote: boolean
+  runtimeLoadFailed: boolean
   onCancelCreateNote: () => void
   onChangeCreateNoteTitle: (title: string) => void
   onOpenCreateNote: () => void
   onOpenSidebar?: () => void
+  onRetryRuntimeLoad: () => void
   onSelectNote: (note: MobileNote) => void
   onSubmitCreateNote: () => void
   selectedNoteId: string
@@ -323,6 +337,7 @@ function NoteListPanel({
         <View style={styles.toolbarSpacer} />
         <IconButton icon={<MagnifyingGlass size={23} color={colors.textSoft} />} />
       </Toolbar>
+      {runtimeLoadFailed ? <VaultLoadErrorNotice onRetry={onRetryRuntimeLoad} /> : null}
       <FlatList
         data={notes}
         keyExtractor={(item) => item.id}
@@ -372,6 +387,17 @@ function NoteListPanel({
         ]}
       >
         <PencilSimple size={28} color="#ffffff" />
+      </Pressable>
+    </View>
+  )
+}
+
+function VaultLoadErrorNotice({ onRetry }: { onRetry: () => void }) {
+  return (
+    <View style={styles.vaultLoadError}>
+      <Text style={styles.vaultLoadErrorText}>Could not load vault notes.</Text>
+      <Pressable onPress={onRetry} style={({ pressed }) => [styles.vaultLoadRetry, pressed ? styles.pressed : null]}>
+        <Text style={styles.vaultLoadRetryText}>Retry</Text>
       </Pressable>
     </View>
   )

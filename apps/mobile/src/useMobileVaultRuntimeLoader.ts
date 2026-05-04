@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { MobileAppStateStorage } from './mobileAppStateStorage'
 import type { MobileNote } from './demoData'
 import type { MobileVaultMetadata } from './mobileVaultMetadata'
@@ -20,19 +20,42 @@ export function useMobileVaultRuntimeLoader({
     selectedNoteId: string | null
   }) => void
 }) {
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'failed'>('loading')
+  const [reloadKey, setReloadKey] = useState(0)
+
+  const retry = useCallback(() => {
+    setLoadState('loading')
+    setReloadKey((key) => key + 1)
+  }, [])
+
   useEffect(() => {
     let isActive = true
 
     void loadMobileVaultRuntime({ appStateStorage, loadNotes, metadataStorage })
       .then((runtime) => {
-        if (isActive && runtime.notes.length > 0) {
+        if (!isActive) {
+          return
+        }
+
+        if (runtime.notes.length > 0) {
           onLoaded(runtime)
         }
+        setLoadState('ready')
       })
-      .catch(() => {})
+      .catch(() => {
+        if (isActive) {
+          setLoadState('failed')
+        }
+      })
 
     return () => {
       isActive = false
     }
-  }, [appStateStorage, loadNotes, metadataStorage, onLoaded])
+  }, [appStateStorage, loadNotes, metadataStorage, onLoaded, reloadKey])
+
+  return {
+    failed: loadState === 'failed',
+    isLoading: loadState === 'loading',
+    retry,
+  }
 }

@@ -5,6 +5,7 @@ import { noteCreateStyles } from './styles/noteCreateStyles'
 import { noteListStyles } from './styles/noteListStyles'
 import { propertiesStyles } from './styles/propertiesStyles'
 import { sidebarStyles } from './styles/sidebarStyles'
+import { vaultLoadStyles } from './styles/vaultLoadStyles'
 
 export const styles = {
   ...commonStyles,
@@ -14,4 +15,5 @@ export const styles = {
   ...noteListStyles,
   ...propertiesStyles,
   ...sidebarStyles,
+  ...vaultLoadStyles,
 }
