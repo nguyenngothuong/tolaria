@@ -8,7 +8,7 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 
 - Branch: `codex/mobile`
 - Active phase: Phase 2 - Mobile Shell
-- Active slice: Refresh saved mobile note projection
+- Active slice: Create local mobile note
 - Push policy: commit locally; do not push unless explicitly requested
 - Validation target: iPad/iOS simulator first
 
@@ -62,14 +62,15 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Split editor save-state styles into a separate style module to keep mobile style files at CodeScene `10`.
 - Added a debounced mobile autosave queue that coalesces rapid TenTap draft changes, marks edited drafts as queued, and ignores stale save results when newer drafts supersede them.
 - Refreshed the in-memory mobile note projection after the latest successful editor save so the note list, editor source, properties words, and snippets update from canonical Markdown.
+- Added the first app-local mobile note creation path and wired the compose button to write a new Markdown note, prepend it to the current list, and select it through the shared compact navigation reducer.
 
 ## Next Action
 
 Continue Phase 2 with the next mobile shell slice:
 
 1. Dismiss or suppress Expo Go's first-run tools modal during simulator QA so screenshots capture the app without the overlay.
-2. Add the first local note create path against app-local vault storage, then wire it into the compact phone and iPad shells.
-3. Add a focused simulator interaction path for editor typing/autosave once Expo Go's overlay no longer blocks clean screenshots.
+2. Add a focused simulator interaction path for editor typing/autosave once Expo Go's overlay no longer blocks clean screenshots.
+3. Add a durable note-create UX state: disabled/pressed state while creating, create failure feedback, and eventual title-entry flow.
 
 ## Verification Log
 
@@ -203,6 +204,11 @@ Continue Phase 2 with the next mobile shell slice:
 - CodeScene after saved note projection refresh: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/mobileAutosaveQueue.ts`, `apps/mobile/src/mobileAutosaveQueue.test.ts`, `apps/mobile/src/mobileSavedDraftProjection.ts`, and `apps/mobile/src/mobileSavedDraftProjection.test.ts` scored `10`.
 - `pnpm --filter @tolaria/mobile test` passed after saved note projection refresh: 16 files / 51 tests.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after saved note projection refresh.
+- `pnpm --filter @tolaria/mobile test -- src/mobileNoteCreate.test.ts src/mobileVaultRepository.test.ts` passed after local note creation: 17 files / 53 tests.
+- `pnpm --filter @tolaria/mobile typecheck` passed after local note creation.
+- CodeScene after local note creation: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/mobileDemoVault.ts`, and `apps/mobile/src/mobileNoteCreate.test.ts` scored `10`; `apps/mobile/src/mobileNoteCreate.ts` returned no scorable code and no findings.
+- `pnpm --filter @tolaria/mobile test` passed after local note creation: 17 files / 53 tests.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after local note creation.
 
 ## Risks / Watch Items
 

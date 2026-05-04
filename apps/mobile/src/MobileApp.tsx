@@ -18,7 +18,7 @@ import {
   SlidersHorizontal,
 } from 'phosphor-react-native'
 import { MobileNote, notes as fallbackNotes, sidebarSections } from './demoData'
-import { loadDemoVaultNotes, saveDemoVaultDraft } from './mobileDemoVault'
+import { createDemoVaultNote, loadDemoVaultNotes, saveDemoVaultDraft } from './mobileDemoVault'
 import { createMobileAutosaveQueue } from './mobileAutosaveQueue'
 import type { MobileEditorDraft } from './mobileEditorDraft'
 import {
@@ -88,6 +88,18 @@ export function MobileApp() {
     setCompactNavigation((state) => transitionCompactNavigation(state, { type: 'selectNote', noteId: note.id }))
   }
   const saveDraft = useCallback((draft: MobileEditorDraft) => autosaveQueue.enqueue(draft), [autosaveQueue])
+  const createNote = useCallback(() => {
+    void createDemoVaultNote()
+      .then((note) => {
+        if (!note) {
+          return
+        }
+
+        setAvailableNotes((notes) => [note, ...notes.filter((item) => item.id !== note.id)])
+        setCompactNavigation((state) => transitionCompactNavigation(state, { type: 'selectNote', noteId: note.id }))
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <SafeAreaProvider>
@@ -98,6 +110,7 @@ export function MobileApp() {
             <NoteListPanel
               notes={availableNotes}
               selectedNoteId={compactNavigation.selectedNoteId}
+              onCreateNote={createNote}
               onSelectNote={selectNote}
             />
             <EditorPanel note={selectedNote} saveState={selectedSaveState} onDraftChange={saveDraft} />
@@ -112,6 +125,7 @@ export function MobileApp() {
             selectedNoteId={compactNavigation.selectedNoteId}
             onNavigate={(event) => setCompactNavigation((state) => transitionCompactNavigation(state, event))}
             onDraftChange={saveDraft}
+            onCreateNote={createNote}
             onSelectNote={selectNote}
           />
         )}
@@ -127,6 +141,7 @@ function CompactShell({
   saveState,
   onNavigate,
   onDraftChange,
+  onCreateNote,
   onSelectNote,
   selectedNoteId,
 }: {
@@ -136,6 +151,7 @@ function CompactShell({
   saveState: MobileEditorSaveState
   onNavigate: (event: CompactNavigationEvent) => void
   onDraftChange: (draft: MobileEditorDraft) => void
+  onCreateNote: () => void
   onSelectNote: (note: MobileNote) => void
   selectedNoteId: string
 }) {
@@ -174,6 +190,7 @@ function CompactShell({
       <NoteListPanel
         notes={notes}
         selectedNoteId={selectedNoteId}
+        onCreateNote={onCreateNote}
         onOpenSidebar={() => onNavigate({ type: 'openSidebar' })}
         onSelectNote={onSelectNote}
       />
@@ -216,11 +233,13 @@ function SidebarPanel({ onClose }: { onClose?: () => void }) {
 
 function NoteListPanel({
   notes,
+  onCreateNote,
   onOpenSidebar,
   onSelectNote,
   selectedNoteId,
 }: {
   notes: MobileNote[]
+  onCreateNote: () => void
   onOpenSidebar?: () => void
   onSelectNote: (note: MobileNote) => void
   selectedNoteId: string
@@ -261,7 +280,7 @@ function NoteListPanel({
           </Pressable>
         )}
       />
-      <Pressable style={styles.composeButton}>
+      <Pressable onPress={onCreateNote} style={styles.composeButton}>
         <PencilSimple size={28} color="#ffffff" />
       </Pressable>
     </View>
