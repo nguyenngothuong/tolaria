@@ -68,13 +68,15 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Added app-managed mobile state storage for the active vault and last selected note, then restored and persisted note selection across launches.
 - Added delete support for app-managed mobile notes through the storage driver, Expo FileSystem adapter, repository boundary, demo vault facade, and editor toolbar.
 - Extracted mobile note deletion orchestration into a small hook so the app shell stays at CodeScene `10.0`.
+- Added app-local mobile vault metadata and metadata storage boundaries so vault id/name/remote URL can live in persisted app state instead of being hardcoded in the app shell.
+- Replaced the demo vault's hardcoded identity with the shared default vault metadata boundary.
 
 ## Next Action
 
 Continue Phase 3 with app-managed vault storage hardening:
 
 1. Add a focused simulator interaction path for create/open/edit/autosave/delete once Expo Go's overlay no longer blocks clean screenshots.
-2. Add app-local vault metadata beyond the hardcoded demo vault id.
+2. Wire the persisted vault metadata catalog into runtime vault loading instead of only exposing the storage boundary.
 3. Decide whether archive should be modeled as a first-class note state or deferred until the mobile vault schema exists.
 
 ## Verification Log
@@ -234,6 +236,11 @@ Continue Phase 3 with app-managed vault storage hardening:
 - CodeScene after local note deletion: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/useMobileNoteDeleteFlow.ts`, `apps/mobile/src/mobileNoteDelete.ts`, `apps/mobile/src/mobileNoteDelete.test.ts`, `apps/mobile/src/mobileVaultStorage.ts`, `apps/mobile/src/mobileVaultStorage.test.ts`, `apps/mobile/src/mobileExpoVaultStorage.ts`, `apps/mobile/src/mobileExpoVaultStorage.test.ts`, `apps/mobile/src/mobileVaultRepository.ts`, `apps/mobile/src/mobileVaultRepository.test.ts`, and `apps/mobile/src/mobileDemoVault.ts` scored `10`.
 - `pnpm --filter @tolaria/mobile test` passed after local note deletion: 19 files / 62 tests.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after local note deletion.
+- `pnpm --filter @tolaria/mobile test -- src/mobileVaultMetadata.test.ts src/mobileVaultMetadataStorage.test.ts` passed after vault metadata storage: 21 files / 68 tests.
+- `pnpm --filter @tolaria/mobile typecheck` passed after vault metadata storage.
+- CodeScene after vault metadata storage: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/mobileDemoVault.ts`, `apps/mobile/src/mobileVaultMetadata.ts`, `apps/mobile/src/mobileVaultMetadataStorage.ts`, `apps/mobile/src/mobileNativeVaultMetadataStorage.ts`, `apps/mobile/src/mobileVaultMetadata.test.ts`, and `apps/mobile/src/mobileVaultMetadataStorage.test.ts` scored `10`.
+- `pnpm --filter @tolaria/mobile test` passed after vault metadata storage: 21 files / 68 tests.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after vault metadata storage.
 
 ## Risks / Watch Items
 

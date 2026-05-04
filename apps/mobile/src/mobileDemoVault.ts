@@ -2,7 +2,10 @@ import { demoNoteSources } from './demoData'
 import type { MobileEditorDraft } from './mobileEditorDraft'
 import { saveMobileEditorDraft } from './mobileEditorDraftSave'
 import { createMobileNoteFile } from './mobileNoteCreate'
-import { createMobileVaultConfig } from './mobileVaultConfig'
+import {
+  createMobileVaultConfigFromMetadata,
+  defaultMobileVaultMetadata,
+} from './mobileVaultMetadata'
 import { createNativeMobileVaultStorage } from './mobileNativeVaultStorage'
 import { createStoredMobileVaultRepository } from './mobileVaultRepository'
 import { seedMobileVaultIfEmpty } from './mobileVaultSeed'
@@ -46,10 +49,5 @@ function demoVaultFiles(): MobileVaultFile[] {
 }
 
 function createDemoVaultConfig() {
-  const result = createMobileVaultConfig({ id: 'personal', name: 'Personal Journal' })
-  if (!result.ok) {
-    throw new Error(result.error)
-  }
-
-  return result.config
+  return createMobileVaultConfigFromMetadata(defaultMobileVaultMetadata)
 }

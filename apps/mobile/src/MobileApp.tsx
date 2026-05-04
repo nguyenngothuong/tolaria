@@ -42,8 +42,9 @@ import { MobileNoteCreatePrompt } from './MobileNoteCreatePrompt'
 import { useMobileNoteCreateFlow } from './useMobileNoteCreateFlow'
 import { useMobileNoteDeleteFlow } from './useMobileNoteDeleteFlow'
 import { createNativeMobileAppStateStorage } from './mobileNativeAppStateStorage'
+import { defaultMobileVaultMetadata } from './mobileVaultMetadata'
 
-const activeMobileVaultId = 'personal'
+const activeMobileVaultId = defaultMobileVaultMetadata.id
 
 export function MobileApp() {
   const { width } = useWindowDimensions()
