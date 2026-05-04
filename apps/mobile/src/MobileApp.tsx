@@ -19,12 +19,10 @@ import {
 } from 'phosphor-react-native'
 import { MobileNote, notes as fallbackNotes, sidebarSections } from './demoData'
 import { loadDemoVaultNotes, saveDemoVaultDraft } from './mobileDemoVault'
+import { createMobileAutosaveQueue } from './mobileAutosaveQueue'
 import type { MobileEditorDraft } from './mobileEditorDraft'
 import {
-  failedMobileEditorSaveState,
   idleMobileEditorSaveState,
-  saveResultState,
-  savingMobileEditorSaveState,
   type MobileEditorSaveState,
 } from './mobileEditorSaveState'
 import { MobileEditorAdapter } from './MobileEditorAdapter'
@@ -51,6 +49,17 @@ export function MobileApp() {
     [availableNotes, compactNavigation.selectedNoteId],
   )
   const selectedSaveState = saveStateByNoteId[selectedNote.id] ?? idleMobileEditorSaveState
+  const autosaveQueue = useMemo(
+    () =>
+      createMobileAutosaveQueue({
+        delayMs: 700,
+        saveDraft: saveDemoVaultDraft,
+        onStateChange: (noteId, saveState) => {
+          setSaveStateByNoteId((state) => ({ ...state, [noteId]: saveState }))
+        },
+      }),
+    [],
+  )
 
   useEffect(() => {
     let isActive = true
@@ -69,19 +78,12 @@ export function MobileApp() {
     }
   }, [])
 
+  useEffect(() => () => autosaveQueue.cancelAll(), [autosaveQueue])
+
   const selectNote = (note: MobileNote) => {
     setCompactNavigation((state) => transitionCompactNavigation(state, { type: 'selectNote', noteId: note.id }))
   }
-  const saveDraft = useCallback((draft: MobileEditorDraft) => {
-    setSaveStateByNoteId((state) => ({ ...state, [draft.noteId]: savingMobileEditorSaveState }))
-    void saveDemoVaultDraft(draft)
-      .then((result) => {
-        setSaveStateByNoteId((state) => ({ ...state, [draft.noteId]: saveResultState(result) }))
-      })
-      .catch(() => {
-        setSaveStateByNoteId((state) => ({ ...state, [draft.noteId]: failedMobileEditorSaveState }))
-      })
-  }, [])
+  const saveDraft = useCallback((draft: MobileEditorDraft) => autosaveQueue.enqueue(draft), [autosaveQueue])
 
   return (
     <SafeAreaProvider>

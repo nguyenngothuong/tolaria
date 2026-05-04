@@ -8,7 +8,7 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 
 - Branch: `codex/mobile`
 - Active phase: Phase 2 - Mobile Shell
-- Active slice: Wire editor save state UI
+- Active slice: Debounce mobile editor autosave
 - Push policy: commit locally; do not push unless explicitly requested
 - Validation target: iPad/iOS simulator first
 
@@ -60,14 +60,15 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Added a mobile editor draft save boundary that writes persistable canonical Markdown drafts to vault storage and refuses blocked drafts.
 - Wired mobile editor draft changes to the app-local demo vault save path and added visible editor save states: Ready, Saving, Saved, Blocked, and Save failed.
 - Split editor save-state styles into a separate style module to keep mobile style files at CodeScene `10`.
+- Added a debounced mobile autosave queue that coalesces rapid TenTap draft changes, marks edited drafts as queued, and ignores stale save results when newer drafts supersede them.
 
 ## Next Action
 
 Continue Phase 2 with the next mobile shell slice:
 
 1. Dismiss or suppress Expo Go's first-run tools modal during simulator QA so screenshots capture the app without the overlay.
-2. Expand the serializer for additional TenTap output needed by real notes: links, emphasis, code, headings, ordered lists, and task lists.
-3. Add a debounced autosave scheduler so editor changes do not write on every TenTap change event.
+2. Refresh the in-memory note projection after a successful editor save so the note list snippet/title stay in sync with saved Markdown.
+3. Add the first local note create path against app-local vault storage, then wire it into the compact phone and iPad shells.
 
 ## Verification Log
 
@@ -190,6 +191,12 @@ Continue Phase 2 with the next mobile shell slice:
 - CodeScene after editor save UI wiring: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/MobileEditorAdapter.tsx`, `apps/mobile/src/mobileDemoVault.ts`, `apps/mobile/src/mobileEditorSaveState.ts`, `apps/mobile/src/mobileEditorSaveState.test.ts`, `apps/mobile/src/styles/editorStyles.ts`, and `apps/mobile/src/styles/editorSaveStateStyles.ts` scored `10`; `apps/mobile/src/styles.ts` returned no scorable code.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after editor save UI wiring.
 - `pnpm --filter @tolaria/mobile exec expo start --ios --clear --port 8088` launched on `iPad Pro 13-inch (M4)` after editor save UI wiring; screenshot captured at `/tmp/tolaria-mobile-save-state-ipad.png`. The app rendered the `Ready` save state with no red runtime error overlay.
+- `pnpm --filter @tolaria/mobile test -- src/mobileAutosaveQueue.test.ts src/mobileEditorSaveState.test.ts` passed after debounced autosave: 15 files / 49 tests.
+- `pnpm --filter @tolaria/mobile typecheck` passed after debounced autosave.
+- CodeScene after debounced autosave: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/MobileEditorAdapter.tsx`, `apps/mobile/src/mobileAutosaveQueue.ts`, `apps/mobile/src/mobileAutosaveQueue.test.ts`, `apps/mobile/src/mobileEditorSaveState.ts`, `apps/mobile/src/mobileEditorSaveState.test.ts`, and `apps/mobile/src/styles/editorSaveStateStyles.ts` scored `10`.
+- `pnpm --filter @tolaria/mobile test` passed after debounced autosave: 15 files / 49 tests.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after debounced autosave.
+- `pnpm --filter @tolaria/mobile exec expo start --ios --clear --port 8089` launched on `iPhone 15` after debounced autosave; screenshots captured at `/tmp/tolaria-mobile-autosave-iphone.png` and `/tmp/tolaria-mobile-autosave-iphone-loaded.png`. The app rendered behind Expo Go's first-run Tools modal with no red runtime error overlay.
 
 ## Risks / Watch Items
 

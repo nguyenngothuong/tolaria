@@ -63,6 +63,8 @@ function saveStateStyle(saveState: MobileEditorSaveState) {
       return styles.editorSaveState_blocked
     case 'failed':
       return styles.editorSaveState_failed
+    case 'queued':
+      return styles.editorSaveState_queued
     case 'saved':
       return styles.editorSaveState_saved
     case 'saving':

@@ -6,6 +6,10 @@ export type MobileEditorSaveState =
       label: 'Ready'
     }
   | {
+      state: 'queued'
+      label: 'Edited'
+    }
+  | {
       state: 'saving'
       label: 'Saving'
     }
@@ -25,6 +29,11 @@ export type MobileEditorSaveState =
 export const idleMobileEditorSaveState: MobileEditorSaveState = {
   state: 'idle',
   label: 'Ready',
+}
+
+export const queuedMobileEditorSaveState: MobileEditorSaveState = {
+  state: 'queued',
+  label: 'Edited',
 }
 
 export const savingMobileEditorSaveState: MobileEditorSaveState = {

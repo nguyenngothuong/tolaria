@@ -11,6 +11,9 @@ export const editorSaveStateStyles = StyleSheet.create({
   editorSaveState_idle: {
     color: colors.mutedText,
   },
+  editorSaveState_queued: {
+    color: colors.textSoft,
+  },
   editorSaveState_saving: {
     color: colors.primary,
   },
