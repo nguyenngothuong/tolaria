@@ -53,6 +53,54 @@ describe('mobile editor draft', () => {
     })
   })
 
+  it('serializes headings, ordered lists, and inline marks', () => {
+    const draft = createMobileEditorDraft({
+      note: {
+        id: 'formatting',
+        title: 'Formatting',
+        content: '# Formatting',
+      },
+      editorHtml: [
+        '<h2>Section</h2>',
+        '<p>Use <strong>bold</strong>, <em>emphasis</em>, <code>code</code>, and <a href="https://tolaria.app">links</a>.</p>',
+        '<ol><li>First</li><li>Second</li></ol>',
+      ].join(''),
+    })
+
+    expect(draft).toMatchObject({
+      persistable: true,
+      canonicalMarkdown: [
+        '## Section',
+        '',
+        'Use **bold**, *emphasis*, `code`, and [links](https://tolaria.app).',
+        '',
+        '1. First',
+        '1. Second',
+      ].join('\n'),
+    })
+  })
+
+  it('serializes TenTap-style task list items', () => {
+    const draft = createMobileEditorDraft({
+      note: {
+        id: 'tasks',
+        title: 'Tasks',
+        content: '# Tasks',
+      },
+      editorHtml: [
+        '<ul data-type="taskList">',
+        '<li data-checked="true"><label><input type="checkbox" checked=""></label><div><p>Done</p></div></li>',
+        '<li data-checked="false"><label><input type="checkbox"></label><div><p>Todo</p></div></li>',
+        '</ul>',
+      ].join(''),
+    })
+
+    expect(draft).toMatchObject({
+      persistable: true,
+      canonicalMarkdown: '- [x] Done\n- [ ] Todo',
+    })
+  })
+
   it('blocks unsupported HTML instead of persisting unknown editor output', () => {
     expect(
       createMobileEditorDraft({

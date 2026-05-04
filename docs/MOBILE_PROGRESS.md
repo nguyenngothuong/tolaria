@@ -8,7 +8,7 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 
 - Branch: `codex/mobile`
 - Active phase: Phase 2 - Mobile Shell
-- Active slice: Seed app-local mobile demo vault
+- Active slice: Expand TenTap Markdown serialization
 - Push policy: commit locally; do not push unless explicitly requested
 - Validation target: iPad/iOS simulator first
 
@@ -55,6 +55,8 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Created [ADR-0111](./adr/0111-expo-file-system-vault-storage.md) to record the mobile filesystem dependency and app-local vault storage path.
 - Added a mobile vault seeding boundary that writes starter Markdown files only when the app-local vault is empty.
 - Wired the mobile shell to load its starter notes through the native Expo FileSystem storage driver and stored repository path, with fixture notes retained as the fallback while storage initializes.
+- Expanded supported TenTap HTML serialization to include H1-H6 headings, ordered lists, task-list markers, inline strong/emphasis/code, and links while continuing to block unsupported block HTML.
+- Split the mobile editor HTML serializer into its own CodeScene-10 module so the draft boundary stays small.
 
 ## Next Action
 
@@ -62,7 +64,7 @@ Continue Phase 2 with the next mobile shell slice:
 
 1. Dismiss or suppress Expo Go's first-run tools modal during simulator QA so screenshots capture the app without the overlay.
 2. Expand the serializer for additional TenTap output needed by real notes: links, emphasis, code, headings, ordered lists, and task lists.
-3. Expand the serializer for additional TenTap output needed by real notes: links, emphasis, code, headings, ordered lists, and task lists.
+3. Add a save command boundary that writes persistable TenTap Markdown drafts back to mobile vault storage.
 
 ## Verification Log
 
@@ -169,6 +171,11 @@ Continue Phase 2 with the next mobile shell slice:
 - CodeScene after app-local demo vault seeding: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/mobileDemoVault.ts`, `apps/mobile/src/mobileExpoVaultStorage.ts`, `apps/mobile/src/mobileVaultSeed.ts`, and `apps/mobile/src/mobileVaultSeed.test.ts` scored `10`; `apps/mobile/src/demoData.ts` returned no scorable code and no findings.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after app-local demo vault seeding.
 - `pnpm --filter @tolaria/mobile exec expo start --ios --clear --port 8087` launched on `iPad Pro 13-inch (M4)` after app-local demo vault seeding; screenshot captured at `/tmp/tolaria-mobile-seeded-ipad.png`. The app rendered via the stored repository path behind Expo Go's first-run Tools modal with no red runtime error overlay.
+- `pnpm --filter @tolaria/mobile test -- src/mobileEditorDraft.test.ts` passed after expanded TenTap serialization: 12 files / 42 tests.
+- `pnpm --filter @tolaria/mobile test` passed after expanded TenTap serialization: 12 files / 42 tests.
+- `pnpm --filter @tolaria/mobile typecheck` passed after expanded TenTap serialization.
+- CodeScene after expanded TenTap serialization: `apps/mobile/src/mobileEditorDraft.ts`, `apps/mobile/src/mobileEditorDraft.test.ts`, and `apps/mobile/src/mobileEditorHtmlMarkdown.ts` scored `10`.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after expanded TenTap serialization.
 
 ## Risks / Watch Items
 

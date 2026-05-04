@@ -1,5 +1,6 @@
 import { splitFrontmatter } from '@tolaria/markdown'
 import type { MobileEditorDocumentInput } from './mobileEditorDocument'
+import { serializeSupportedMobileEditorHtml } from './mobileEditorHtmlMarkdown'
 
 export type MobileEditorDraft =
   | {
@@ -24,7 +25,7 @@ export function createMobileEditorDraft({
   editorHtml: string
   note: MobileEditorDocumentInput
 }): MobileEditorDraft {
-  const markdownBody = serializeSupportedHtml(editorHtml)
+  const markdownBody = serializeSupportedMobileEditorHtml({ editorHtml })
   if (!markdownBody) {
     return createBlockedDraft({ editorHtml, note })
   }
@@ -63,42 +64,4 @@ function withFrontmatter({
 }) {
   const [frontmatter] = splitFrontmatter(sourceMarkdown)
   return frontmatter ? `${frontmatter}${markdownBody}` : markdownBody
-}
-
-function serializeSupportedHtml(editorHtml: string) {
-  const blocks = editorHtml.match(/<(h1|p|ul)(?:\s[^>]*)?>[\s\S]*?<\/\1>/gi)
-  if (!blocks || blocks.join('') !== editorHtml.trim()) {
-    return null
-  }
-
-  return blocks?.map(serializeBlock).join('\n\n') ?? null
-}
-
-function serializeBlock(block: string) {
-  if (block.match(/^<h1/i)) {
-    return `# ${textContent(block)}`
-  }
-
-  if (block.match(/^<ul/i)) {
-    return listItemText(block).map((text) => `- ${text}`).join('\n')
-  }
-
-  return textContent(block)
-}
-
-function listItemText(block: string) {
-  return [...block.matchAll(/<li(?:\s[^>]*)?>([\s\S]*?)<\/li>/gi)].map((match) => textContent(match[1]))
-}
-
-function textContent(value: string) {
-  return decodeHtmlEntities(value.replace(/<[^>]+>/g, '').trim())
-}
-
-function decodeHtmlEntities(value: string) {
-  return value
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&')
 }
