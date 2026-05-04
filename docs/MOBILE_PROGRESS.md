@@ -7,8 +7,8 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 ## Current State
 
 - Branch: `codex/mobile`
-- Active phase: Phase 3 - App-Managed Vault Storage
-- Active slice: Harden app-managed vault lifecycle actions
+- Active phase: Phase 4 - Editor V1
+- Active slice: Markdown editor durability and frontmatter round-trip
 - Push policy: commit locally; do not push unless explicitly requested
 - Validation target: iPad/iOS simulator first
 
@@ -73,14 +73,16 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Wired mobile runtime loading through the persisted vault metadata catalog boundary, so app state, note loading, autosave, note creation, and deletion all operate against the active vault metadata.
 - Extracted runtime loading into a hook plus tested pure loader to keep `MobileApp.tsx` at CodeScene `10.0`.
 - Added first-class runtime vault load failure state with a visible retry notice in the note list, replacing the previous silent failure path.
+- Completed the Phase 3 app-managed vault storage path for the current single-vault mobile app: app-local metadata, seeded markdown files, note listing, open, autosave, create, delete, last selection restore, runtime retry, and iPad/iPhone simulator render validation.
+- Deferred archive as a first-class mobile note state until the mobile vault schema/frontmatter model is explicit; implementing archive now as file movement would create throwaway semantics that may conflict with desktop-compatible metadata.
 
 ## Next Action
 
-Continue Phase 3 with app-managed vault storage hardening:
+Continue Phase 4 with editor durability:
 
-1. Add a focused simulator interaction path for create/open/edit/autosave/delete once Expo Go's overlay no longer blocks clean screenshots.
-2. Decide whether archive should be modeled as a first-class note state or deferred until the mobile vault schema exists.
-3. Add a small runtime empty-vault state once user-created blank vaults exist.
+1. Add frontmatter parsing/serialization for mobile note saves so type/date/status/icon and future archive state round-trip through canonical Markdown.
+2. Expand TenTap Markdown serialization coverage for common writing constructs and preserve unsupported blocks without corrupting files.
+3. Add simulator interaction coverage for create/open/edit/autosave/delete using a development-client path or another route that avoids Expo Go's overlay controls.
 
 ## Verification Log
 
@@ -254,6 +256,9 @@ Continue Phase 3 with app-managed vault storage hardening:
 - CodeScene after runtime load retry UI: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/styles/noteListStyles.ts`, and `apps/mobile/src/styles/vaultLoadStyles.ts` scored `10`; `apps/mobile/src/useMobileVaultRuntimeLoader.ts` returned no scorable code and no findings.
 - `pnpm --filter @tolaria/mobile test` passed after runtime load retry UI: 22 files / 70 tests.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after runtime load retry UI.
+- `pnpm --filter @tolaria/mobile exec expo start --ios --clear --port 8090` launched the runtime metadata/retry build in Expo Go.
+- iPhone simulator screenshot captured at `/tmp/tolaria-mobile-runtime-iphone.png`; the note list rendered from app-local storage with no red runtime error overlay, but Expo Go's gear overlay still blocks clean interaction screenshots.
+- iPad simulator screenshot captured at `/tmp/tolaria-mobile-runtime-ipad-loaded.png`; the iPad split layout rendered stored notes and TenTap content with the `Ready` save state and no red runtime error overlay.
 
 ## Risks / Watch Items
 
