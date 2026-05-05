@@ -65,6 +65,7 @@ import type { MobileVaultRuntime } from './mobileVaultRuntime'
 import { useMobileVaultRuntimeLoader } from './useMobileVaultRuntimeLoader'
 import type { MobileNotePropertyPatch } from './mobileNoteProperties'
 import { useMobileGitSyncFlow } from './useMobileGitSyncFlow'
+import { createUnavailableMobileGitTransport } from './mobileGitTransport'
 
 export function MobileApp() {
   const { width } = useWindowDimensions()
@@ -72,6 +73,7 @@ export function MobileApp() {
   const showsProperties = width >= 1000
   const appStateStorage = useMemo(() => createNativeMobileAppStateStorage(), [])
   const gitCredentialStorage = useMemo(() => createNativeMobileGitCredentialStorage(), [])
+  const gitTransport = useMemo(() => createUnavailableMobileGitTransport(), [])
   const gitHubOAuthClientIdState = useMemo(() => currentMobileGitHubOAuthClientIdState(), [])
   const vaultMetadataStorage = useMemo(() => createNativeMobileVaultMetadataStorage(), [])
   const [activeVaultMetadata, setActiveVaultMetadata] = useState(defaultMobileVaultMetadata)
@@ -86,6 +88,7 @@ export function MobileApp() {
   const gitSyncFlow = useMobileGitSyncFlow({
     createGitHubOAuthSession: createNativeMobileGitHubOAuthSessionFromEnvironment,
     credentialStorage: gitCredentialStorage,
+    gitTransport,
     vault: activeVaultMetadata,
   })
   const autosaveQueue = useMemo(
@@ -173,7 +176,7 @@ export function MobileApp() {
               onCancelCreateNote={createFlow.cancel}
               onChangeCreateNoteTitle={createFlow.setTitle}
               onOpenCreateNote={createFlow.open}
-              onGitSyncAction={gitSyncFlow.authenticate}
+              onGitSyncAction={gitSyncFlow.runPrimaryAction}
               onRetryRuntimeLoad={runtimeLoader.retry}
               onSubmitCreateNote={createFlow.submit}
               onSelectNote={selectNote}
@@ -213,7 +216,7 @@ export function MobileApp() {
             onCancelCreateNote={createFlow.cancel}
             onChangeCreateNoteTitle={createFlow.setTitle}
             onOpenCreateNote={createFlow.open}
-            onGitSyncAction={gitSyncFlow.authenticate}
+            onGitSyncAction={gitSyncFlow.runPrimaryAction}
             onRetryRuntimeLoad={runtimeLoader.retry}
             onSubmitCreateNote={createFlow.submit}
             onSelectNote={selectNote}

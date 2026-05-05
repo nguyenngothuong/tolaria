@@ -1,24 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { MobileGitCredentialStorage } from './mobileGitCredentialStorage'
 import { loadMobileGitCredentialStateForVault } from './mobileGitCredentialStateForVault'
-import type { MobileGitCredentialState } from './mobileGitSyncPlan'
+import type { MobileGitCredentialState, MobileGitOperation } from './mobileGitSyncPlan'
 import { createMobileGitSyncPlanForVault } from './mobileGitSyncRuntimePlan'
-import { authenticateMobileGitSyncPlan } from './mobileGitAuthentication'
+import { runMobileGitSyncFlowAction, type MobileGitSyncFlowFailure } from './mobileGitSyncFlowAction'
+import type { MobileGitTransport } from './mobileGitTransport'
 import type { MobileGitHubOAuthSession } from './mobileGitHubOAuthFlow'
 import type { MobileVaultMetadata } from './mobileVaultMetadata'
 
 export function useMobileGitSyncFlow({
   createGitHubOAuthSession,
   credentialStorage,
+  gitTransport,
   vault,
 }: {
   createGitHubOAuthSession: () => MobileGitHubOAuthSession
   credentialStorage: MobileGitCredentialStorage
+  gitTransport: MobileGitTransport
   vault: MobileVaultMetadata
 }) {
-  const [authFailureMessage, setAuthFailureMessage] = useState<string | null>(null)
+  const [failure, setFailure] = useState<MobileGitSyncFlowFailure | null>(null)
   const [credentials, setCredentials] = useState<MobileGitCredentialState>({ state: 'missing' })
-  const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const [activeOperation, setActiveOperation] = useState<MobileGitOperation | null>(null)
   const refreshCredentials = useCallback(() => {
     void loadMobileGitCredentialStateForVault({ credentialStorage, vault })
       .then(setCredentials)
@@ -27,43 +30,30 @@ export function useMobileGitSyncFlow({
   const gitSyncPlan = useMemo(
     () => createMobileGitSyncPlanForVault({
       credentials,
-      ...(authFailureMessage ? { failure: { message: authFailureMessage, operation: 'clone' } } : {}),
-      ...(isAuthenticating ? { operation: 'clone' } : {}),
+      ...(failure ? { failure } : {}),
+      ...(activeOperation ? { operation: activeOperation } : {}),
       vault,
     }),
-    [authFailureMessage, credentials, isAuthenticating, vault],
+    [activeOperation, credentials, failure, vault],
   )
-  const authenticate = useCallback(() => {
-    if (isAuthenticating) {
-      return
-    }
-
-    setAuthFailureMessage(null)
-    setIsAuthenticating(true)
-    void authenticateMobileGitSyncPlan({
+  const runPrimaryAction = useCallback(() => {
+    runMobileGitSyncFlowAction({
+      activeOperation,
       credentialStorage,
       createGitHubOAuthSession,
-      now: () => new Date().toISOString(),
-      plan: gitSyncPlan,
+      gitSyncPlan,
+      gitTransport,
+      refreshCredentials,
+      setActiveOperation,
+      setFailure,
+      vault,
     })
-      .then((result) => {
-        if (result.state === 'connected') {
-          refreshCredentials()
-          return
-        }
-
-        if (result.state === 'failed') {
-          setAuthFailureMessage(result.message)
-        }
-      })
-      .catch(() => setAuthFailureMessage('GitHub authentication failed.'))
-      .finally(() => setIsAuthenticating(false))
-  }, [createGitHubOAuthSession, credentialStorage, gitSyncPlan, isAuthenticating, refreshCredentials])
+  }, [activeOperation, createGitHubOAuthSession, credentialStorage, gitSyncPlan, gitTransport, refreshCredentials, vault])
 
   useEffect(refreshCredentials, [refreshCredentials])
 
   return {
-    authenticate,
     gitSyncPlan,
+    runPrimaryAction,
   }
 }

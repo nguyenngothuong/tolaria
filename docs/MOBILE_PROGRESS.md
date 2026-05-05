@@ -97,13 +97,14 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Exposed the missing `EXPO_PUBLIC_GITHUB_OAUTH_CLIENT_ID` requirement inside the mobile remote setup prompt and split the client-id detector away from native AuthSession imports.
 - Separated the mobile Git remote setup prompt styles from note-creation prompt styles so vault-management UI can evolve without coupling to compose UI names.
 - Added a sidebar vault-management card that shows the active app-local vault, Git sync state, and an explicit Git remote action on iPad and compact sidebar surfaces.
+- Added the first mobile Git transport execution boundary behind the existing sync/auth plan, including explicit pull/push routing and a visible unavailable-transport failure until the native Git implementation lands.
 
 ## Next Action
 
 Continue Phase 4 with editor durability:
 
 1. Continue TenTap Markdown serialization coverage for any editor output observed in simulator QA.
-2. Start the mobile Git transport execution boundary behind the existing sync/auth plan.
+2. Start the native Git engine spike behind `MobileGitTransport`, preferably Rust/libgit2 unless Expo native-module constraints block it.
 3. Retry the iOS development-client build after installing an iOS 26.2 simulator runtime in Xcode.
 
 ## Verification Log
@@ -366,6 +367,10 @@ Continue Phase 4 with editor durability:
 - `pnpm --filter @tolaria/mobile typecheck` passed after adding the vault-management sidebar card.
 - CodeScene after adding the vault-management sidebar card: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/MobileVaultManagementCard.tsx`, `apps/mobile/src/mobileVaultManagementSummary.ts`, `apps/mobile/src/mobileVaultManagementSummary.test.ts`, and `apps/mobile/src/styles/vaultManagementStyles.ts` scored `10`; `apps/mobile/src/styles.ts` returned no scorable code and no findings.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after adding the vault-management sidebar card; Metro recovered from a cache deserialize warning by doing a full crawl.
+- `pnpm --filter @tolaria/mobile test -- src/mobileGitPrimaryAction.test.ts src/mobileGitTransport.test.ts src/mobileGitSyncFlowAction.test.ts src/mobileGitSyncRuntimePlan.test.ts src/mobileGitSyncStatus.test.ts` passed after adding the mobile Git transport execution boundary: 43 files / 143 tests.
+- `pnpm --filter @tolaria/mobile typecheck` passed after adding the mobile Git transport execution boundary.
+- CodeScene after adding the mobile Git transport execution boundary: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/useMobileGitSyncFlow.ts`, `apps/mobile/src/mobileGitSyncPlan.ts`, `apps/mobile/src/mobileGitPrimaryAction.ts`, `apps/mobile/src/mobileGitPrimaryAction.test.ts`, `apps/mobile/src/mobileGitTransport.ts`, `apps/mobile/src/mobileGitTransport.test.ts`, `apps/mobile/src/mobileGitSyncFlowAction.ts`, and `apps/mobile/src/mobileGitSyncFlowAction.test.ts` scored `10`.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after adding the mobile Git transport execution boundary.
 
 ## Risks / Watch Items
 

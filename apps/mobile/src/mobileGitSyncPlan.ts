@@ -26,7 +26,7 @@ export type MobileGitSyncPlan =
       state: 'ready'
       canPull: true
       canPush: boolean
-      primaryAction: MobileGitOperation
+      primaryAction: 'pull' | 'push'
       remote: MobileGitRemote
     }
   | {
