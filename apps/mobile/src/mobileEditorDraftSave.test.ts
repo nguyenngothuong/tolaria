@@ -26,7 +26,7 @@ describe('mobile editor draft save', () => {
     const storage = createMemoryMobileVaultStorage([])
     const draft = createMobileEditorDraft({
       note: { id: 'workflow', title: 'Workflow', content: '# Workflow' },
-      editorHtml: '<table><tbody><tr><td>Unsupported</td></tr></tbody></table>',
+      editorHtml: '<figure><figcaption>Unsupported</figcaption></figure>',
     })
 
     await expect(saveMobileEditorDraft({ draft, storage, vault })).resolves.toEqual({

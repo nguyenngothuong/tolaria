@@ -138,12 +138,57 @@ describe('mobile editor draft', () => {
           title: 'Workflow',
           content: '# Workflow\n\nOriginal markdown',
         },
-        editorHtml: '<table><tbody><tr><td>Not yet supported</td></tr></tbody></table>',
+        editorHtml: '<figure><figcaption>Not yet supported</figcaption></figure>',
       }),
     ).toEqual({
       noteId: 'workflow',
       sourceMarkdown: '# Workflow\n\nOriginal markdown',
-      editorHtml: '<table><tbody><tr><td>Not yet supported</td></tr></tbody></table>',
+      editorHtml: '<figure><figcaption>Not yet supported</figcaption></figure>',
+      persistable: false,
+      blockedReason: 'unsupportedEditorHtml',
+    })
+  })
+
+  it('serializes simple TenTap tables as Markdown tables', () => {
+    expect(
+      createMobileEditorDraft({
+        note: {
+          id: 'table',
+          title: 'Table',
+          content: '# Table',
+        },
+        editorHtml: [
+          '<table><tbody>',
+          '<tr><th><p>Name</p></th><th><p>Status</p></th></tr>',
+          '<tr><td><p>Tolaria</p></td><td><p>Ready &amp; synced</p></td></tr>',
+          '<tr><td><p>Pipe</p></td><td><p>A | B</p></td></tr>',
+          '</tbody></table>',
+        ].join(''),
+      }),
+    ).toMatchObject({
+      noteId: 'table',
+      persistable: true,
+      canonicalMarkdown: [
+        '| Name | Status |',
+        '| --- | --- |',
+        '| Tolaria | Ready & synced |',
+        '| Pipe | A \\| B |',
+      ].join('\n'),
+    })
+  })
+
+  it('blocks malformed tables instead of guessing columns', () => {
+    expect(
+      createMobileEditorDraft({
+        note: {
+          id: 'table',
+          title: 'Table',
+          content: '# Table',
+        },
+        editorHtml: '<table><tbody><tr><td>Name</td><td>Status</td></tr><tr><td>Tolaria</td></tr></tbody></table>',
+      }),
+    ).toMatchObject({
+      noteId: 'table',
       persistable: false,
       blockedReason: 'unsupportedEditorHtml',
     })

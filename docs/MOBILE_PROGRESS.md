@@ -84,13 +84,14 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Added Expo development-client support and scripts for native iOS simulator QA without Expo Go overlay controls, while keeping generated native folders ignored.
 - Created [ADR-0112](./adr/0112-expo-development-client-for-mobile-native-qa.md) for the mobile development-client QA path.
 - Added safe TenTap image serialization for persisted relative/remote image sources while continuing to block transient image sources such as `blob:` URLs.
+- Added simple TenTap table serialization for rectangular tables, including entity decoding and escaped pipe characters, while continuing to block malformed table shapes.
 
 ## Next Action
 
 Continue Phase 4 with editor durability:
 
-1. Continue TenTap Markdown serialization coverage for tables and any editor output observed in simulator QA.
-2. Replace the first property chips with richer desktop-compatible pickers once the mobile metadata schema is finalized.
+1. Replace the first property chips with richer desktop-compatible pickers once the mobile metadata schema is finalized.
+2. Continue TenTap Markdown serialization coverage for any editor output observed in simulator QA.
 3. Retry the iOS development-client build after installing an iOS 26.2 simulator runtime in Xcode.
 
 ## Verification Log
@@ -307,6 +308,10 @@ Continue Phase 4 with editor durability:
 - `pnpm --filter @tolaria/mobile typecheck` passed after safe image serialization.
 - CodeScene after safe image serialization: `apps/mobile/src/mobileEditorHtmlMarkdown.ts` and `apps/mobile/src/mobileEditorDraft.test.ts` scored `10`.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after safe image serialization.
+- `pnpm --filter @tolaria/mobile test -- src/mobileEditorDraft.test.ts src/mobileEditorDraftSave.test.ts` passed after simple table serialization: 27 files / 90 tests.
+- `pnpm --filter @tolaria/mobile typecheck` passed after simple table serialization.
+- CodeScene after simple table serialization: `apps/mobile/src/mobileEditorHtmlMarkdown.ts`, `apps/mobile/src/mobileEditorTableMarkdown.ts`, `apps/mobile/src/mobileEditorDraft.test.ts`, and `apps/mobile/src/mobileEditorDraftSave.test.ts` scored `10`.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after simple table serialization.
 
 ## Risks / Watch Items
 

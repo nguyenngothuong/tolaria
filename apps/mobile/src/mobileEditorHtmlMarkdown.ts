@@ -1,3 +1,9 @@
+import {
+  canSerializeMobileEditorTable,
+  isMobileEditorTableBlock,
+  mobileEditorTableMarkdown,
+} from './mobileEditorTableMarkdown'
+
 type EditorHtmlInput = {
   editorHtml: string
 }
@@ -36,12 +42,18 @@ const supportedHtmlTags = new Set([
   's',
   'strike',
   'strong',
+  'table',
+  'tbody',
+  'td',
+  'th',
+  'thead',
+  'tr',
   'ul',
 ])
 
 export function serializeSupportedMobileEditorHtml(input: EditorHtmlInput) {
   const html = normalizeBlockSpacing(input)
-  const blocks = html.match(/<(h[1-6]|p|ul|ol|blockquote|pre)(?:\s[^>]*)?>[\s\S]*?<\/\1>/gi)
+  const blocks = html.match(/<(h[1-6]|p|ul|ol|blockquote|pre|table)(?:\s[^>]*)?>[\s\S]*?<\/\1>/gi)
   if (!blocks) {
     return null
   }
@@ -79,6 +91,10 @@ function serializeBlock(input: HtmlInput) {
 
   if (isCodeBlock(input)) {
     return codeBlockMarkdown(input)
+  }
+
+  if (isMobileEditorTableBlock(input)) {
+    return mobileEditorTableMarkdown(input)
   }
 
   return inlineMarkdown(input)
@@ -178,11 +194,15 @@ function containsUnsupportedTag(input: HtmlInput) {
 }
 
 function blocksUnsafeEditorOutput(input: HtmlInput) {
-  return containsUnsupportedTag(input) || containsUnsafeImage(input)
+  return containsUnsupportedTag(input) || containsUnsafeImage(input) || containsUnsafeTable(input)
 }
 
 function containsUnsafeImage(input: HtmlInput) {
   return [...input.html.matchAll(/<img\b[^>]*>/gi)].some((match) => !imageMarkdown({ tag: match[0] }))
+}
+
+function containsUnsafeTable(input: HtmlInput) {
+  return Boolean(isMobileEditorTableBlock(input)) && !canSerializeMobileEditorTable(input)
 }
 
 function imageMarkdown(input: { tag: string }) {
