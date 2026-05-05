@@ -81,14 +81,16 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Wired the iPad/mobile properties panel to the frontmatter save boundary for type, status, icon, date, and tags; successful saves reload projected notes from app-local storage, and large iPads now show the right properties column.
 - Expanded supported TenTap HTML serialization to include blockquotes, fenced code blocks with language classes, strikethrough, and an unsupported inline-tag guard so image/table output stays blocked until explicitly handled.
 - Added a deterministic mobile core-flow smoke test over app-local storage that covers create, open, edit/save, property update, and delete through the same repository/storage/editor/frontmatter boundaries used by the app.
+- Added Expo development-client support and scripts for native iOS simulator QA without Expo Go overlay controls, while keeping generated native folders ignored.
+- Created [ADR-0112](./adr/0112-expo-development-client-for-mobile-native-qa.md) for the mobile development-client QA path.
 
 ## Next Action
 
 Continue Phase 4 with editor durability:
 
-1. Add a native development-client simulator route so the same core flows can be exercised without Expo Go's overlay controls.
-2. Continue TenTap Markdown serialization coverage for attachments/images, tables, and any editor output observed in simulator QA.
-3. Replace the first property chips with richer desktop-compatible pickers once the mobile metadata schema is finalized.
+1. Continue TenTap Markdown serialization coverage for attachments/images, tables, and any editor output observed in simulator QA.
+2. Replace the first property chips with richer desktop-compatible pickers once the mobile metadata schema is finalized.
+3. Retry the iOS development-client build after installing an iOS 26.2 simulator runtime in Xcode.
 
 ## Verification Log
 
@@ -296,6 +298,10 @@ Continue Phase 4 with editor durability:
 - CodeScene after core flow smoke coverage: `apps/mobile/src/mobileCoreFlowSmoke.test.ts` scored `10`.
 - `pnpm --filter @tolaria/mobile test` passed after core flow smoke coverage: 27 files / 87 tests.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after core flow smoke coverage.
+- `pnpm --filter @tolaria/mobile exec expo install expo-dev-client` installed `expo-dev-client@~55.0.32`.
+- `pnpm --filter @tolaria/mobile exec expo install expo` updated Expo to `~55.0.20`; `pnpm --filter @tolaria/mobile exec expo install --check` passes.
+- `pnpm --filter @tolaria/mobile typecheck`, `pnpm --filter @tolaria/mobile test`, and `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after development-client setup.
+- `pnpm --filter @tolaria/mobile exec expo run:ios --device 40724AA3-A793-41D8-9C66-79745DA28DE4 --no-bundler` generated ignored native iOS output and installed CocoaPods via Homebrew, then blocked because Xcode has the iOS 26.2 SDK but only iOS 17.5/18.6 simulator runtimes installed; `xcodebuild -showdestinations` lists no eligible simulator destination until the matching iOS 26.2 runtime is installed.
 
 ## Risks / Watch Items
 
