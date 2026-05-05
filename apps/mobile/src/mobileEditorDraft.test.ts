@@ -149,7 +149,7 @@ describe('mobile editor draft', () => {
     })
   })
 
-  it('blocks unsupported inline HTML inside otherwise supported blocks', () => {
+  it('serializes safe image attachments inside supported blocks', () => {
     expect(
       createMobileEditorDraft({
         note: {
@@ -157,7 +157,24 @@ describe('mobile editor draft', () => {
           title: 'Image',
           content: '# Image',
         },
-        editorHtml: '<p><img src="attachment.png" alt="Attachment"></p>',
+        editorHtml: '<p>Before</p><p><img src="attachments/sketch.png" alt="Interface sketch"></p><p>After</p>',
+      }),
+    ).toMatchObject({
+      noteId: 'image',
+      persistable: true,
+      canonicalMarkdown: 'Before\n\n![Interface sketch](attachments/sketch.png)\n\nAfter',
+    })
+  })
+
+  it('blocks transient or unsafe image sources inside otherwise supported blocks', () => {
+    expect(
+      createMobileEditorDraft({
+        note: {
+          id: 'image',
+          title: 'Image',
+          content: '# Image',
+        },
+        editorHtml: '<p><img src="blob:https://tolaria.app/preview" alt="Attachment"></p>',
       }),
     ).toMatchObject({
       noteId: 'image',

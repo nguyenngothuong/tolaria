@@ -26,6 +26,7 @@ const supportedHtmlTags = new Set([
   'h5',
   'h6',
   'i',
+  'img',
   'input',
   'label',
   'li',
@@ -59,7 +60,7 @@ function canSerializeBlocks({
   blocks: RegExpMatchArray
   html: string
 }) {
-  return blocks.join('') === html && !blocks.some(containsUnsupportedTag)
+  return blocks.join('') === html && !blocks.some((block) => blocksUnsafeEditorOutput({ html: block }))
 }
 
 function serializeBlock(input: HtmlInput) {
@@ -163,6 +164,7 @@ function inlineMarkdown(input: HtmlInput) {
 function markInlineHtml(input: HtmlInput) {
   return input.html
     .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<img\b[^>]*>/gi, (tag) => imageMarkdown({ tag }) ?? tag)
     .replace(/<(strong|b)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/gi, '**$2**')
     .replace(/<(em|i)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/gi, '*$2*')
     .replace(/<(s|strike|del)(?:\s[^>]*)?>([\s\S]*?)<\/\1>/gi, '~~$2~~')
@@ -170,9 +172,53 @@ function markInlineHtml(input: HtmlInput) {
     .replace(/<a(?:\s[^>]*)?href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
 }
 
-function containsUnsupportedTag(input: string) {
-  return [...input.matchAll(/<\/?([a-z0-9-]+)/gi)]
+function containsUnsupportedTag(input: HtmlInput) {
+  return [...input.html.matchAll(/<\/?([a-z0-9-]+)/gi)]
     .some((match) => !supportedHtmlTags.has(match[1].toLowerCase()))
+}
+
+function blocksUnsafeEditorOutput(input: HtmlInput) {
+  return containsUnsupportedTag(input) || containsUnsafeImage(input)
+}
+
+function containsUnsafeImage(input: HtmlInput) {
+  return [...input.html.matchAll(/<img\b[^>]*>/gi)].some((match) => !imageMarkdown({ tag: match[0] }))
+}
+
+function imageMarkdown(input: { tag: string }) {
+  const src = imageSource(input)
+  if (!src) {
+    return null
+  }
+
+  const alt = htmlAttribute({ tag: input.tag, name: 'alt' }) ?? ''
+  return `![${decodeHtmlEntities({ text: alt })}](${decodeHtmlEntities({ text: src })})`
+}
+
+function imageSource(input: { tag: string }) {
+  const src = htmlAttribute({ tag: input.tag, name: 'src' })
+  return src && isPersistableImageSource({ src }) ? src : null
+}
+
+function htmlAttribute(input: { tag: string; name: string }) {
+  const match = input.tag.match(new RegExp(`${input.name}=["']([^"']+)["']`, 'i'))
+  return match?.[1] ?? null
+}
+
+function isPersistableImageSource(input: { src: string }) {
+  if (input.src.match(/[\n\r]/)) {
+    return false
+  }
+
+  return isRemoteImageSource(input) || isRelativeImageSource(input)
+}
+
+function isRemoteImageSource(input: { src: string }) {
+  return input.src.startsWith('https://') || input.src.startsWith('http://')
+}
+
+function isRelativeImageSource(input: { src: string }) {
+  return !input.src.startsWith('/') && !input.src.startsWith('//') && !input.src.match(/^[A-Za-z][A-Za-z0-9+.-]*:/)
 }
 
 function stripRemainingTags(value: string) {
