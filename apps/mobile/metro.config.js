@@ -10,5 +10,15 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ]
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'isomorphic-git') {
+    return {
+      filePath: path.resolve(workspaceRoot, 'node_modules/isomorphic-git/index.js'),
+      type: 'sourceFile',
+    }
+  }
+
+  return context.resolveRequest(context, moduleName, platform)
+}
 
 module.exports = config

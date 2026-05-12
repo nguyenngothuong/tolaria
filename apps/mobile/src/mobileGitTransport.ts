@@ -16,9 +16,21 @@ export type MobileGitTransportResult =
       state: 'failed'
     }
 
+export type MobileGitRepositoryStatus =
+  | {
+      hasLocalChanges: boolean
+      isRepository: boolean
+      state: 'available'
+    }
+  | {
+      message: string
+      state: 'failed'
+    }
+
 export type MobileGitTransport = {
   pull: (request: MobileGitTransportRequest) => Promise<MobileGitTransportResult>
   push: (request: MobileGitTransportRequest) => Promise<MobileGitTransportResult>
+  status?: (request: MobileGitTransportRequest) => Promise<MobileGitRepositoryStatus>
 }
 
 export function createUnavailableMobileGitTransport(): MobileGitTransport {

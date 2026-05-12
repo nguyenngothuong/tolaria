@@ -58,6 +58,7 @@ function memoryCredentialStorage(): MobileGitCredentialStorage {
   let isAvailable = false
 
   return {
+    loadRecord: async () => null,
     loadState: async () => isAvailable ? { state: 'available' } : { state: 'missing' },
     remove: async () => {
       isAvailable = false
@@ -70,6 +71,7 @@ function memoryCredentialStorage(): MobileGitCredentialStorage {
 
 function noopCredentialStorage(): MobileGitCredentialStorage {
   return {
+    loadRecord: async () => null,
     loadState: async () => ({ state: 'missing' }),
     remove: async () => {},
     saveRecord: async () => {},

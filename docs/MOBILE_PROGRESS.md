@@ -124,15 +124,18 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Tightened relationship writes so mobile relationship additions save canonical wikilink refs, dedupe by canonical target, resolve aliases/plain titles for chip display/opening, and avoid introducing new loose id/string values from the properties UI.
 - Demoted saved views from the primary mobile sidebar until real persisted view definitions exist; fixture nested-view definitions remain available to tests but are no longer exposed as if they were desktop-equivalent saved views.
 - Continued the properties quality pass by grouping the panel into system, relationships, custom properties, info, and history; adding read-only derived inverse relationship groups; and demoting custom scalar properties to read-only until typed mobile controls exist.
+- Added the first usable mobile Git transport with `isomorphic-git` and an Expo FileSystem adapter: GitHub OAuth remotes can clone into app-local vault storage, fast-forward pull, autocommit local changes, and push.
+- Disabled demo vault seeding for remote-backed vaults so cloned real vaults are not polluted with fixture notes.
+- Created [ADR-0116](./adr/0116-isomorphic-git-for-mobile-real-vault-sync.md) for the JavaScript Git transport decision and its native-replacement boundary.
 - Set the booted iPad simulator keyboard preferences to Italian (`it_IT@sw=QWERTY;hw=Automatic`).
 
 ## Next Action
 
 Continue Phase 4 as a quality remediation pass before new feature work:
 
-1. Run iPad simulator QA over sidebar filters, favorites, properties sections, relationship add/remove, raw wikilink autocomplete, and AI/settings input states.
-2. Add real persisted view definition loading before re-exposing Views in the sidebar.
-3. Implement usable native Git support so a real remote-backed vault can be cloned/synced locally.
+1. Run simulator QA for the real-vault sync path: configure a GitHub remote, connect OAuth, clone, inspect loaded notes, edit locally, push, and relaunch.
+2. Run iPad simulator QA over sidebar filters, favorites, properties sections, relationship add/remove, raw wikilink autocomplete, AI/settings input states, and Git status transitions.
+3. Add real persisted view definition loading before re-exposing Views in the sidebar.
 4. Install a simulator runtime matching the active Xcode SDK, or switch Xcode to one matching the installed iOS 17.5/18.6 runtimes, then retry the iOS development-client build.
 
 ## Verification Log
@@ -444,6 +447,12 @@ Continue Phase 4 as a quality remediation pass before new feature work:
 - CodeScene after the direct-create/properties editability update: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/MobileEditablePropertyPickers.tsx`, `apps/mobile/src/MobileEditorAdapter.tsx`, `apps/mobile/src/MobileEditorBreadcrumb.tsx`, `apps/mobile/src/MobilePropertiesPanel.tsx`, `apps/mobile/src/mobileNoteProperties.ts`, `apps/mobile/src/mobilePropertyPicker.ts`, `apps/mobile/src/styles/breadcrumbStyles.ts`, `apps/mobile/src/styles/commonStyles.ts`, `apps/mobile/src/styles/editorStyles.ts`, `apps/mobile/src/styles/noteListStyles.ts`, `apps/mobile/src/styles/propertyChipStyles.ts`, and `apps/mobile/src/useMobileNoteCreateFlow.ts` scored `10`; `apps/mobile/src/styles.ts` reported no scorable score.
 - CodeScene pre-commit safeguard passed after splitting the new styles.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export` passed after the direct-create/properties editability update.
+- `pnpm --filter @tolaria/mobile exec expo install --check` passed after aligning Expo SDK 55 patch dependencies and adding the mobile Git transport dependencies.
+- `pnpm --filter @tolaria/mobile typecheck` passed after the isomorphic-git mobile sync transport.
+- `pnpm --filter @tolaria/mobile test` passed after the isomorphic-git mobile sync transport: 59 files / 191 tests.
+- CodeScene after the isomorphic-git mobile sync transport: `apps/mobile/src/MobileApp.tsx`, `apps/mobile/src/mobileIsomorphicGitTransport.ts`, `apps/mobile/src/mobileExpoGitFileSystem.ts`, `apps/mobile/src/useMobileGitSyncFlow.ts`, `apps/mobile/src/mobileGitSyncFlowAction.ts`, `apps/mobile/src/mobileGitTransport.ts`, `apps/mobile/src/mobileIsomorphicGitTransport.test.ts`, `apps/mobile/src/mobileNativeIsomorphicGitTransport.ts`, `apps/mobile/src/mobileDemoVaultSeedPolicy.ts`, `apps/mobile/src/mobileDemoVault.test.ts`, `apps/mobile/src/mobileSecureGitCredentialStorage.ts`, `apps/mobile/src/mobileDemoVault.ts`, `apps/mobile/src/mobileGitCredentialStorage.ts`, and the touched credential/sync tests scored `10`; `apps/mobile/src/mobileGitSyncRuntimePlan.ts` reported no scorable score.
+- CodeScene pre-commit safeguard passed after the isomorphic-git mobile sync transport.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export-git-sync` passed after the isomorphic-git mobile sync transport.
 
 ## Risks / Watch Items
 

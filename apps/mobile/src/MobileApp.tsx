@@ -74,8 +74,7 @@ import { useMobileVaultRuntimeLoader } from './useMobileVaultRuntimeLoader'
 import type { MobileNotePropertyPatch } from './mobileNoteProperties'
 import { useMobileGitSyncFlow } from './useMobileGitSyncFlow'
 import { useMobileAiSettingsFlow } from './useMobileAiSettingsFlow'
-import { createNativeMobileGitTransport } from './mobileNativeGitTransport'
-import { loadExpoMobileGitNativeModule } from './mobileExpoNativeGitModule'
+import { createNativeIsomorphicMobileGitTransport } from './mobileNativeIsomorphicGitTransport'
 import { applyMobileRawNoteContent } from './mobileRawNoteProjection'
 import {
   createMobileSidebarSections,
@@ -96,7 +95,7 @@ export function MobileApp() {
   const aiSettingsStorage = useMemo(() => createNativeMobileAiSettingsStorage(), [])
   const appStateStorage = useMemo(() => createNativeMobileAppStateStorage(), [])
   const gitCredentialStorage = useMemo(() => createNativeMobileGitCredentialStorage(), [])
-  const gitTransport = useMemo(() => createNativeMobileGitTransport(loadExpoMobileGitNativeModule()), [])
+  const gitTransport = useMemo(() => createNativeIsomorphicMobileGitTransport(gitCredentialStorage), [gitCredentialStorage])
   const gitHubOAuthClientIdState = useMemo(() => currentMobileGitHubOAuthClientIdState(), [])
   const vaultMetadataStorage = useMemo(() => createNativeMobileVaultMetadataStorage(), [])
   const [activeVaultMetadata, setActiveVaultMetadata] = useState(defaultMobileVaultMetadata)
@@ -118,12 +117,22 @@ export function MobileApp() {
   )
   const selectedEditorMode = editorModeByNoteId[selectedNote.id] ?? 'rich'
   const selectedSaveState = saveStateByNoteId[selectedNote.id] ?? idleMobileEditorSaveState
+  const reloadSyncedVault = useCallback(() => {
+    void loadDemoVaultNotes(activeVaultMetadata)
+      .then((notes) => {
+        setAvailableNotes(notes)
+        setCompactNavigation((state) => selectLoadedNote(state, notes, state.selectedNoteId))
+      })
+      .catch(() => {})
+  }, [activeVaultMetadata])
   const gitSyncFlow = useMobileGitSyncFlow({
     createGitHubOAuthSession: createNativeMobileGitHubOAuthSessionFromEnvironment,
     credentialStorage: gitCredentialStorage,
     gitTransport,
+    onSynced: reloadSyncedVault,
     vault: activeVaultMetadata,
   })
+  const markGitLocalChanges = gitSyncFlow.markLocalChanges
   const aiSettingsFlow = useMobileAiSettingsFlow({
     secretStorage: aiProviderSecretStorage,
     settingsStorage: aiSettingsStorage,
@@ -137,10 +146,11 @@ export function MobileApp() {
           setSaveStateByNoteId((state) => ({ ...state, [noteId]: saveState }))
         },
         onSavedDraft: (draft) => {
+          markGitLocalChanges()
           setAvailableNotes((notes) => applySavedMobileEditorDraft({ draft, notes }))
         },
       }),
-    [activeVaultMetadata],
+    [activeVaultMetadata, markGitLocalChanges],
   )
 
   const applyLoadedVaultRuntime = useCallback(({ activeVault, notes, selectedNoteId }: MobileVaultRuntime) => {
@@ -196,13 +206,19 @@ export function MobileApp() {
             ? { label: 'Saved', state: 'saved' }
             : { label: 'Save failed', state: 'failed' },
         }))
+        if (result.status === 'saved') {
+          markGitLocalChanges()
+        }
       })
       .catch(() => {
         setSaveStateByNoteId((state) => ({ ...state, [noteId]: { label: 'Save failed', state: 'failed' } }))
       })
-  }, [activeVaultMetadata, selectedNote.id])
+  }, [activeVaultMetadata, markGitLocalChanges, selectedNote.id])
   const deleteFlow = useMobileNoteDeleteFlow({
-    deleteNote: (noteId) => deleteDemoVaultNote(noteId, activeVaultMetadata),
+    deleteNote: async (noteId) => {
+      await deleteDemoVaultNote(noteId, activeVaultMetadata)
+      markGitLocalChanges()
+    },
     loadNotes: () => loadDemoVaultNotes(activeVaultMetadata),
     notes: availableNotes,
     onNotesLoaded: setAvailableNotes,
@@ -212,6 +228,7 @@ export function MobileApp() {
   const createFlow = useMobileNoteCreateFlow({
     createNote: (title) => createDemoVaultNote({ title, vaultMetadata: activeVaultMetadata }),
     onCreated: (note) => {
+      markGitLocalChanges()
       setAvailableNotes((notes) => [note, ...notes.filter((item) => item.id !== note.id)])
       selectNoteId(note.id)
     },
@@ -219,11 +236,17 @@ export function MobileApp() {
   const propertiesFlow = useMobileNotePropertiesFlow({
     loadNotes: () => loadDemoVaultNotes(activeVaultMetadata),
     onNotesLoaded: setAvailableNotes,
-    saveFrontmatter: (noteId, metadata) => saveDemoVaultNoteFrontmatter({
-      metadata,
-      noteId,
-      vaultMetadata: activeVaultMetadata,
-    }),
+    saveFrontmatter: async (noteId, metadata) => {
+      const result = await saveDemoVaultNoteFrontmatter({
+        metadata,
+        noteId,
+        vaultMetadata: activeVaultMetadata,
+      })
+      if (result.status === 'saved') {
+        markGitLocalChanges()
+      }
+      return result
+    },
     selectedNote,
   })
   const toggleSelectedArchive = useCallback(() => {

@@ -19,6 +19,7 @@ export type MobileGitCredentialRecord = {
 }
 
 export type MobileGitCredentialStorage = {
+  loadRecord: (requirement: MobileVaultAuthRequirement) => Promise<MobileGitCredentialRecord | null>
   loadState: (requirement: MobileVaultAuthRequirement) => Promise<MobileGitCredentialState>
   remove: (requirement: MobileVaultAuthRequirement) => Promise<void>
   saveRecord: (record: MobileGitCredentialRecord) => Promise<void>

@@ -55,6 +55,7 @@ function baseActionInput(events: string[]) {
   return {
     activeOperation: null,
     credentialStorage: {
+      loadRecord: async () => null,
       loadState: async () => ({ state: 'missing' as const }),
       remove: async () => {},
       saveRecord: async () => {},

@@ -4,6 +4,8 @@ import type { MobileVaultFile, MobileVaultStorageDriver } from './mobileVaultSto
 export type ExpoMobileVaultFileInfo = {
   exists: boolean
   isDirectory?: boolean
+  modificationTime?: number
+  size?: number
 }
 
 export type ExpoMobileVaultFileSystem = {
@@ -11,14 +13,20 @@ export type ExpoMobileVaultFileSystem = {
   documentDirectory: string | null
   getInfoAsync: (uri: string) => Promise<ExpoMobileVaultFileInfo>
   makeDirectoryAsync: (uri: string, options: { intermediates: true }) => Promise<void>
-  readAsStringAsync: (uri: string) => Promise<string>
+  readAsStringAsync: (uri: string, options?: ExpoMobileVaultReadOptions) => Promise<string>
   readDirectoryAsync: (uri: string) => Promise<string[]>
-  writeAsStringAsync: (uri: string, content: string) => Promise<void>
+  writeAsStringAsync: (uri: string, content: string, options?: ExpoMobileVaultWriteOptions) => Promise<void>
 }
 
 type VaultPathInput = {
   path: string
 }
+
+export type ExpoMobileVaultReadOptions = {
+  encoding?: 'base64' | 'utf8'
+}
+
+export type ExpoMobileVaultWriteOptions = ExpoMobileVaultReadOptions
 
 type DirectoryListingInput = {
   fileSystem: ExpoMobileVaultFileSystem

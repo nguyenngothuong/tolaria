@@ -464,11 +464,11 @@ interface PulseCommit {
 
 ### Mobile Git Transport
 
-The mobile app routes Git pull/push through `MobileGitTransport`. React Native UI and sync state code depend only on this TypeScript contract; the native implementation is introduced behind `createNativeMobileGitTransport`.
+The mobile app routes Git pull/push through `MobileGitTransport`. React Native UI and sync state code depend only on this TypeScript contract; transport implementations can be JavaScript or native as long as they keep credentials behind the credential storage boundary and never place tokens in remote URLs.
 
-`createNativeMobileGitTransport` resolves the optional Expo native module named `TolariaGit` through `expo-modules-core`. Until that module is wired into Expo development builds, the native transport adapter returns a clear unavailable-module failure. This keeps authentication, sync status, retry UI, and future libgit2/Rust work testable without pretending that a JavaScript fallback is production Git.
+`createIsomorphicMobileGitTransport` is the current usable transport. It uses `isomorphic-git` plus an Expo FileSystem adapter rooted at the app-managed vault directory. For GitHub HTTPS remotes, it loads the OAuth token from SecureStore, clones the repository when `.git` is missing, uses fast-forward-only pull for existing repositories, and autocommits changed/deleted files before push.
 
-The native boundary request is intentionally narrow for the first spike: active vault id, app-managed vault directory name, remote URL, remote host, and required auth strategy. Credentials stay behind SecureStore/OAuth/native Git credential callbacks, and remote URLs must not embed tokens.
+`createNativeMobileGitTransport` still resolves the optional Expo native module named `TolariaGit` through `expo-modules-core`. That native boundary remains the later replacement path for SSH, non-GitHub remotes, conflict resolution, and performance work that proves unsuitable for the JavaScript transport.
 
 ### Auto-Sync
 

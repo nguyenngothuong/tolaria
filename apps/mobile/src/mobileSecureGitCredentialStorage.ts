@@ -17,6 +17,8 @@ export function createMobileSecureGitCredentialStorage(
   secureStore: MobileSecureStore,
 ): MobileGitCredentialStorage {
   return {
+    loadRecord: async (requirement) =>
+      parseMobileGitCredentialRecord(await secureStore.getItemAsync(createMobileGitCredentialKey(requirement))),
     loadState: async (requirement) => mobileGitCredentialState({
       record: parseMobileGitCredentialRecord(await secureStore.getItemAsync(createMobileGitCredentialKey(requirement))),
       requirement,

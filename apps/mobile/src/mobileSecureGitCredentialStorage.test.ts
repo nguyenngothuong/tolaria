@@ -17,10 +17,15 @@ describe('createMobileSecureGitCredentialStorage', () => {
     }))
 
     await expect(storage.loadState(requirement)).resolves.toEqual({ state: 'available' })
+    await expect(storage.loadRecord(requirement)).resolves.toMatchObject({
+      host: 'github.com',
+      kind: 'githubOAuthToken',
+    })
 
     await storage.remove(requirement)
 
     await expect(storage.loadState(requirement)).resolves.toEqual({ state: 'missing' })
+    await expect(storage.loadRecord(requirement)).resolves.toBeNull()
   })
 
   it('treats malformed secure-store content as missing credentials', async () => {

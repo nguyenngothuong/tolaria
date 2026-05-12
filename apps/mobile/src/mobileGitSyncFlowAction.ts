@@ -20,6 +20,7 @@ export function runMobileGitSyncFlowAction({
   createGitHubOAuthSession,
   gitSyncPlan,
   gitTransport,
+  onSynced,
   refreshCredentials,
   setActiveOperation,
   setFailure,
@@ -30,6 +31,7 @@ export function runMobileGitSyncFlowAction({
   createGitHubOAuthSession: () => MobileGitHubOAuthSession
   gitSyncPlan: MobileGitSyncPlan
   gitTransport: MobileGitTransport
+  onSynced?: () => void
   refreshCredentials: () => void
   setActiveOperation: (operation: MobileGitOperation | null) => void
   setFailure: (failure: MobileGitSyncFlowFailure | null) => void
@@ -55,6 +57,7 @@ export function runMobileGitSyncFlowAction({
   if (action.state === 'transport') {
     runTransportAction({
       gitTransport,
+      onSynced,
       operation: action.operation,
       remote: action.remote,
       setActiveOperation,
@@ -103,6 +106,7 @@ function runAuthenticationAction({
 
 function runTransportAction({
   gitTransport,
+  onSynced,
   operation,
   remote,
   setActiveOperation,
@@ -110,6 +114,7 @@ function runTransportAction({
   vault,
 }: {
   gitTransport: MobileGitTransport
+  onSynced?: () => void
   operation: 'pull' | 'push'
   remote: Parameters<typeof runMobileGitTransportOperation>[0]['remote']
   setActiveOperation: (operation: MobileGitOperation | null) => void
@@ -127,7 +132,10 @@ function runTransportAction({
     .then((result) => {
       if (result.state === 'failed') {
         setFailure({ message: result.message, operation })
+        return
       }
+
+      onSynced?.()
     })
     .catch(() => setFailure({ message: 'Mobile Git sync failed.', operation }))
     .finally(() => setActiveOperation(null))

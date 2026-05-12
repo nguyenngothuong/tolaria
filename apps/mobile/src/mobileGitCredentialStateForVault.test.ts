@@ -35,6 +35,7 @@ function memoryCredentialStorage(): MobileGitCredentialStorage {
   const records = new Map<string, ReturnType<typeof createMobileGitCredentialRecord>>()
 
   return {
+    loadRecord: async (requirement) => records.get(`${requirement.strategy}:${requirement.host}`) ?? null,
     loadState: async (requirement) => records.has(`${requirement.strategy}:${requirement.host}`)
       ? { state: 'available' }
       : { state: 'missing' },
@@ -49,6 +50,9 @@ function memoryCredentialStorage(): MobileGitCredentialStorage {
 
 function failingCredentialStorage(): MobileGitCredentialStorage {
   return {
+    loadRecord: async () => {
+      throw new Error('should not load credentials')
+    },
     loadState: async () => {
       throw new Error('should not load credentials')
     },

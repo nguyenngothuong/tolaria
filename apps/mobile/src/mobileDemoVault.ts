@@ -13,12 +13,15 @@ import { createNativeMobileVaultStorage } from './mobileNativeVaultStorage'
 import { createStoredMobileVaultRepository } from './mobileVaultRepository'
 import { seedMobileVaultIfEmpty } from './mobileVaultSeed'
 import type { MobileVaultFile } from './mobileVaultStorage'
+import { shouldSeedDemoVault } from './mobileDemoVaultSeedPolicy'
 
 export async function loadDemoVaultNotes(vaultMetadata = defaultMobileVaultMetadata) {
   const storage = createNativeMobileVaultStorage()
   const demoVault = createDemoVaultConfig(vaultMetadata)
-  await seedMobileVaultIfEmpty({ files: demoVaultFiles(), storage, vault: demoVault })
-  await addMissingDemoVaultFiles({ files: demoVaultFiles(), storage, vault: demoVault })
+  if (shouldSeedDemoVault(vaultMetadata)) {
+    await seedMobileVaultIfEmpty({ files: demoVaultFiles(), storage, vault: demoVault })
+    await addMissingDemoVaultFiles({ files: demoVaultFiles(), storage, vault: demoVault })
+  }
 
   return createStoredMobileVaultRepository({ storage, vault: demoVault }).listNotes()
 }
@@ -79,6 +82,7 @@ function demoVaultFiles(): MobileVaultFile[] {
 function createDemoVaultConfig(vaultMetadata: MobileVaultMetadata) {
   return createMobileVaultConfigFromMetadata(vaultMetadata)
 }
+
 
 function createDemoVaultStorageContext(vaultMetadata: MobileVaultMetadata) {
   return {
