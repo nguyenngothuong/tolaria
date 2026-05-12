@@ -1,7 +1,8 @@
 import { CaretLeft, Plus, X } from 'phosphor-react-native'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import type { MobileNote } from './demoData'
+import { mobileDerivedRelationshipGroups } from './mobileDerivedRelationships'
 import { MobileEditablePropertyPickers } from './MobileEditablePropertyPickers'
 import type { MobileNotePropertyPatch } from './mobileNoteProperties'
 import { nextMobilePropertyPicker, type MobilePropertyPickerKey } from './mobilePropertyPicker'
@@ -45,61 +46,127 @@ export function MobilePropertiesPanel({
       <PanelToolbar onClose={onClose} />
       <ScrollView contentContainerStyle={styles.propertiesContent}>
         {failed ? <Text style={styles.propertyError}>Could not save property.</Text> : null}
-        <MobileEditablePropertyPickers
-          disabled={isSaving}
-          note={note}
-          openPicker={openPicker}
-          onChangeProperties={onChangeProperties}
-          onSelectPicker={selectPicker}
-        />
-        <RelationshipGroup
-          label="Belongs to"
-          notes={notes}
-          targets={note.belongsTo}
-          onChangeTargets={(belongsTo) => onChangeProperties?.({ belongsTo })}
-          onOpenNote={onOpenNote}
-        />
-        <RelationshipGroup
-          label="Related to"
-          notes={notes}
-          targets={[...note.relatedTo, ...note.outgoingLinks]}
-          writableTargets={note.relatedTo}
-          onChangeTargets={(relatedTo) => onChangeProperties?.({ relatedTo })}
-          onOpenNote={onOpenNote}
-        />
-        <RelationshipGroup
-          label="Has"
-          notes={notes}
-          targets={note.has}
-          onChangeTargets={(has) => onChangeProperties?.({ has })}
-          onOpenNote={onOpenNote}
-        />
-        {Object.entries(note.relationships).map(([key, targets]) => (
-          <RelationshipGroup
-            key={key}
-            label={formatRelationshipLabel(key)}
-            notes={notes}
-            targets={targets}
-            onChangeTargets={(nextTargets) => onChangeProperties?.({
-              relationships: { ...note.relationships, [key]: nextTargets },
-              removedRelationshipKeys: nextTargets.length === 0 ? [key] : undefined,
-            })}
-            onOpenNote={onOpenNote}
+        <PropertySection title="System">
+          <MobileEditablePropertyPickers
+            disabled={isSaving}
+            note={note}
+            openPicker={openPicker}
+            onChangeProperties={onChangeProperties}
+            onSelectPicker={selectPicker}
           />
-        ))}
-        <AddRelationshipGroup
-          note={note}
-          onAdd={(key) => onChangeProperties?.({ relationships: { ...note.relationships, [key]: [] } })}
-        />
-        <CustomProperties note={note} onChangeProperties={onChangeProperties} />
-        <BacklinkGroup backlinks={note.backlinks} onOpenNote={onOpenNote} />
-        <PropertyRow label="Words" value={String(note.words)} />
-        <PropertyRow label="Modified" value={note.modified} />
-        <Text style={styles.propertyGroupTitle}>History</Text>
-        <Text style={styles.historyItem}>eb373865c - Updated 1 note</Text>
-        <Text style={styles.historyItem}>5e853fdfe - Updated 1 note</Text>
+        </PropertySection>
+        <PropertySection title="Relationships">
+          <EditableRelationships note={note} notes={notes} onChangeProperties={onChangeProperties} onOpenNote={onOpenNote} />
+          <DerivedRelationships note={note} notes={notes} onOpenNote={onOpenNote} />
+        </PropertySection>
+        <CustomProperties note={note} />
+        <PropertySection title="Info">
+          <BacklinkGroup backlinks={note.backlinks} onOpenNote={onOpenNote} />
+          <PropertyRow label="Words" value={String(note.words)} />
+          <PropertyRow label="Modified" value={note.modified} />
+        </PropertySection>
+        <PropertySection title="History">
+          <Text style={styles.historyItem}>eb373865c - Updated 1 note</Text>
+          <Text style={styles.historyItem}>5e853fdfe - Updated 1 note</Text>
+        </PropertySection>
       </ScrollView>
     </View>
+  )
+}
+
+function PropertySection({
+  children,
+  title,
+}: {
+  children: ReactNode
+  title: string
+}) {
+  return (
+    <View style={styles.propertySection}>
+      <Text style={styles.propertyGroupTitle}>{title}</Text>
+      {children}
+    </View>
+  )
+}
+
+function EditableRelationships({
+  note,
+  notes,
+  onChangeProperties,
+  onOpenNote,
+}: {
+  note: MobileNote
+  notes: MobileNote[]
+  onChangeProperties?: (patch: MobileNotePropertyPatch) => void
+  onOpenNote?: (noteId: string) => void
+}) {
+  return (
+    <>
+      <RelationshipGroup
+        label="Belongs to"
+        notes={notes}
+        targets={note.belongsTo}
+        onChangeTargets={(belongsTo) => onChangeProperties?.({ belongsTo })}
+        onOpenNote={onOpenNote}
+      />
+      <RelationshipGroup
+        label="Related to"
+        notes={notes}
+        targets={[...note.relatedTo, ...note.outgoingLinks]}
+        writableTargets={note.relatedTo}
+        onChangeTargets={(relatedTo) => onChangeProperties?.({ relatedTo })}
+        onOpenNote={onOpenNote}
+      />
+      <RelationshipGroup
+        label="Has"
+        notes={notes}
+        targets={note.has}
+        onChangeTargets={(has) => onChangeProperties?.({ has })}
+        onOpenNote={onOpenNote}
+      />
+      {Object.entries(note.relationships).map(([key, targets]) => (
+        <RelationshipGroup
+          key={key}
+          label={formatRelationshipLabel(key)}
+          notes={notes}
+          targets={targets}
+          onChangeTargets={(nextTargets) => onChangeProperties?.({
+            relationships: { ...note.relationships, [key]: nextTargets },
+            removedRelationshipKeys: nextTargets.length === 0 ? [key] : undefined,
+          })}
+          onOpenNote={onOpenNote}
+        />
+      ))}
+      <AddRelationshipGroup
+        note={note}
+        onAdd={(key) => onChangeProperties?.({ relationships: { ...note.relationships, [key]: [] } })}
+      />
+    </>
+  )
+}
+
+function DerivedRelationships({
+  note,
+  notes,
+  onOpenNote,
+}: {
+  note: MobileNote
+  notes: MobileNote[]
+  onOpenNote?: (noteId: string) => void
+}) {
+  const groups = mobileDerivedRelationshipGroups({ note, notes })
+  return (
+    <>
+      {groups.map((group) => (
+        <RelationshipGroup
+          key={group.label}
+          label={group.label}
+          notes={notes}
+          targets={group.targets}
+          onOpenNote={onOpenNote}
+        />
+      ))}
+    </>
   )
 }
 
@@ -135,6 +202,7 @@ function RelationshipGroup({
     <View style={styles.relationshipGroup}>
       <RelationshipHeader canAdd={Boolean(onChangeTargets)} label={label} onAdd={() => setIsAdding(true)} />
       <View style={styles.relationshipChipRow}>
+        {uniqueTargets.length === 0 ? <Text style={styles.relationshipEmpty}>None</Text> : null}
         {uniqueTargets.map((target) => (
           <RelationshipChip
             key={target}
@@ -246,64 +314,16 @@ function AddRelationshipGroup({
 
 function CustomProperties({
   note,
-  onChangeProperties,
 }: {
   note: MobileNote
-  onChangeProperties?: (patch: MobileNotePropertyPatch) => void
 }) {
-  const [draftKey, setDraftKey] = useState('')
-  const [draftValue, setDraftValue] = useState('')
   const entries = Object.entries(note.customProperties)
 
   return (
-    <View style={styles.relationshipGroup}>
-      <Text style={styles.propertyGroupTitle}>Custom properties</Text>
-      {entries.map(([key, value]) => (
-        <View key={key} style={styles.customPropertyRow}>
-          <Text style={styles.customPropertyKey}>{formatRelationshipLabel(key)}</Text>
-          <TextInput
-            onChangeText={(nextValue) => onChangeProperties?.({ customProperties: { ...note.customProperties, [key]: nextValue } })}
-            style={styles.customPropertyValue}
-            value={value}
-          />
-          <Pressable
-            onPress={() => {
-              const rest = customPropertiesWithoutKey({ key, properties: note.customProperties })
-              onChangeProperties?.({ customProperties: rest, removedCustomPropertyKeys: [key] })
-            }}
-            style={({ pressed }) => [styles.relationshipRemoveButton, pressed ? styles.pressed : null]}
-          >
-            <X color={colors.mutedText} size={13} />
-          </Pressable>
-        </View>
-      ))}
-      <View style={styles.customPropertyAddRow}>
-        <TextInput
-          autoCapitalize="none"
-          autoCorrect={false}
-          onChangeText={setDraftKey}
-          placeholder="Property"
-          placeholderTextColor={colors.mutedText}
-          style={styles.customPropertyAddInput}
-          value={draftKey}
-        />
-        <TextInput
-          onChangeText={setDraftValue}
-          onSubmitEditing={() => {
-            const key = relationshipKeyFromLabel(draftKey)
-            if (key && draftValue.trim().length > 0) {
-              onChangeProperties?.({ customProperties: { ...note.customProperties, [key]: draftValue.trim() } })
-              setDraftKey('')
-              setDraftValue('')
-            }
-          }}
-          placeholder="Value"
-          placeholderTextColor={colors.mutedText}
-          style={styles.customPropertyAddInput}
-          value={draftValue}
-        />
-      </View>
-    </View>
+    <PropertySection title="Custom properties">
+      {entries.length === 0 ? <Text style={styles.relationshipEmpty}>None</Text> : null}
+      {entries.map(([key, value]) => <PropertyRow key={key} label={formatRelationshipLabel(key)} value={value} />)}
+    </PropertySection>
   )
 }
 
@@ -382,16 +402,6 @@ function formatRelationshipLabel(key: string) {
 
 function relationshipKeyFromLabel(label: string) {
   return label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
-}
-
-function customPropertiesWithoutKey({
-  key,
-  properties,
-}: {
-  key: string
-  properties: Record<string, string>
-}) {
-  return Object.fromEntries(Object.entries(properties).filter(([candidate]) => candidate !== key))
 }
 
 function PanelToolbar({ onClose }: { onClose?: () => void }) {

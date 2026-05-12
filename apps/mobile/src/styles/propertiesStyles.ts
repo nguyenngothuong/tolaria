@@ -11,6 +11,9 @@ export const propertiesStyles = StyleSheet.create({
   propertiesContent: {
     padding: spacing.lg,
   },
+  propertySection: {
+    marginTop: spacing.lg,
+  },
   propertiesTitle: {
     color: colors.text,
     fontSize: 17,
@@ -36,7 +39,6 @@ export const propertiesStyles = StyleSheet.create({
     textAlign: 'right',
   },
   propertyGroupTitle: {
-    marginTop: spacing.xl,
     color: colors.mutedText,
     fontSize: 13,
     fontWeight: '700',

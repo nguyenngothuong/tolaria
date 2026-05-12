@@ -53,7 +53,7 @@ Remaining correction:
 
 ### Properties And Relationships
 
-Status: relationship additions partially corrected on 2026-05-05; panel structure and inverse semantics remain open.
+Status: relationship additions and read-only inverse groups corrected; deeper desktop parity still open.
 
 Desktop reference:
 
@@ -65,17 +65,18 @@ Desktop reference:
 Mobile current state:
 
 - Relationship chips are visually closer than before, and new relationship additions now canonicalize selected/typed targets to wikilink refs before saving.
-- Add/remove works locally but lacks create-and-open, derived inverse groups, full alias/path matching parity, and proper empty/suggested states.
-- Custom property editing is basic text input with weak type semantics.
-- The panel is crowded and structurally less clear than desktop.
+- Add/remove works locally but lacks create-and-open, full alias/path matching parity, and desktop-grade picker behavior.
+- Derived inverse relationship groups are now shown read-only when other notes point at the active note.
+- Custom properties are shown read-only until mobile has typed controls equivalent to desktop property editing.
+- The panel is grouped into system metadata, relationships, custom properties, info, and history, but the visual density still needs simulator QA.
 
 Required correction:
 
 - Store relationship values as canonical wikilinks, not loose ids.
 - Share or mirror desktop relationship normalization semantics.
-- Add proper empty states, suggested core relationships, derived inverse relationships, and create/open flow.
+- Add create/open flow and richer suggested relationship states.
 - Separate property sections visually: system, relationships, custom properties, info/history.
-- Remove or demote any editable affordance that cannot write correct desktop-compatible frontmatter.
+- Restore custom-property editing only after typed value controls can preserve desktop-compatible frontmatter.
 
 ### Wikilinks
 

@@ -123,15 +123,16 @@ This file is the resumable working log for Tolaria mobile. The strategy and road
 - Corrected the AI product boundary: provider/model/API-key setup now lives in a mobile Settings surface, provider config persists as app-local settings, API keys go through SecureStore, and `MobileAiPanel` only consumes a configured API model target.
 - Tightened relationship writes so mobile relationship additions save canonical wikilink refs, dedupe by canonical target, resolve aliases/plain titles for chip display/opening, and avoid introducing new loose id/string values from the properties UI.
 - Demoted saved views from the primary mobile sidebar until real persisted view definitions exist; fixture nested-view definitions remain available to tests but are no longer exposed as if they were desktop-equivalent saved views.
+- Continued the properties quality pass by grouping the panel into system, relationships, custom properties, info, and history; adding read-only derived inverse relationship groups; and demoting custom scalar properties to read-only until typed mobile controls exist.
 - Set the booted iPad simulator keyboard preferences to Italian (`it_IT@sw=QWERTY;hw=Automatic`).
 
 ## Next Action
 
 Continue Phase 4 as a quality remediation pass before new feature work:
 
-1. Finish the properties panel quality pass: inverse relationships, suggested slots, clearer grouping, and demotion/removal of weak custom-property editing if it cannot match desktop semantics.
+1. Run iPad simulator QA over sidebar filters, favorites, properties sections, relationship add/remove, raw wikilink autocomplete, and AI/settings input states.
 2. Add real persisted view definition loading before re-exposing Views in the sidebar.
-3. Run iPad simulator QA over sidebar filters, favorites, editable properties, relationship add/remove, raw wikilink autocomplete, and AI/settings input states.
+3. Implement usable native Git support so a real remote-backed vault can be cloned/synced locally.
 4. Install a simulator runtime matching the active Xcode SDK, or switch Xcode to one matching the installed iOS 17.5/18.6 runtimes, then retry the iOS development-client build.
 
 ## Verification Log

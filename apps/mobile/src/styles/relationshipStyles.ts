@@ -28,6 +28,11 @@ export const relationshipStyles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  relationshipEmpty: {
+    color: colors.mutedText,
+    fontSize: 13,
+    paddingVertical: spacing.xs,
+  },
   relationshipRemoveButton: {
     width: 18,
     height: 18,
