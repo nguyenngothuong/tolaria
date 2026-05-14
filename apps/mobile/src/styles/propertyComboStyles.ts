@@ -27,4 +27,11 @@ export const propertyComboStyles = StyleSheet.create({
   propertyComboOptionTextSelected: {
     color: colors.primary,
   },
+  propertyComboEmpty: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.mutedText,
+    fontSize: 13,
+    fontWeight: '600',
+  },
 })

@@ -515,3 +515,12 @@ Continue Phase 4 as a quality remediation pass before new feature work:
 - `pnpm --filter @tolaria/mobile typecheck` passed.
 - `pnpm --filter @tolaria/mobile test -- src/mobileEditorMessages.test.ts src/mobileWikilinkAutocomplete.test.ts` passed; the mobile test runner executed 61 files / 202 tests.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export-wikilink-autocomplete` passed.
+
+## 2026-05-14 Type Combobox Follow-Up
+
+- Reworked the mobile Type picker into a searchable combobox: opening Type focuses the text field, typing filters available type options, and exact typed matches normalize to the canonical type label.
+- Added empty-state copy for unmatched type searches.
+- Added pure mobile combobox tests for option filtering and canonical exact-match resolution.
+- `pnpm --filter @tolaria/mobile typecheck` passed.
+- `pnpm --filter @tolaria/mobile test -- src/mobilePropertyCombo.test.ts src/mobileNoteProperties.test.ts` passed; the mobile test runner executed 62 files / 204 tests.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export-type-combobox` passed.

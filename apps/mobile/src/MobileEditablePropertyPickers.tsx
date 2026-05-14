@@ -14,6 +14,7 @@ import {
   toggleMobileNoteTag,
   type MobileNotePropertyPatch,
 } from './mobileNoteProperties'
+import { filterMobilePropertyComboOptions, resolveMobilePropertyComboValue } from './mobilePropertyCombo'
 import { mobilePropertyDisplayValue, type MobilePropertyPickerKey } from './mobilePropertyPicker'
 import { styles } from './styles'
 import { colors } from './theme'
@@ -110,7 +111,12 @@ function EditableTextProperty({
   variant?: 'chips' | 'combo'
 }) {
   const [draft, setDraft] = useState(value)
-  const commitDraft = () => commitTextValue({ current: value, next: draft, onCommit })
+  const commitDraft = () => {
+    const next = variant === 'combo'
+      ? resolveMobilePropertyComboValue({ options: suggestions, value: draft })
+      : draft
+    commitTextValue({ current: value, next, onCommit, onSettled: setDraft })
+  }
 
   return (
     <PropertyPickerSection
@@ -123,6 +129,7 @@ function EditableTextProperty({
       <View style={styles.propertyPickerOptions}>
         <TextInput
           autoCapitalize="sentences"
+          autoFocus={variant === 'combo'}
           editable={!disabled}
           keyboardType="default"
           onBlur={commitDraft}
@@ -131,6 +138,7 @@ function EditableTextProperty({
           placeholder={placeholder}
           placeholderTextColor={colors.mutedText}
           returnKeyType="done"
+          selectTextOnFocus={variant === 'combo'}
           style={styles.propertyTextInput}
           value={draft}
         />
@@ -138,6 +146,7 @@ function EditableTextProperty({
           ? (
             <PropertyComboOptions
               disabled={disabled}
+              query={draft}
               suggestions={suggestions}
               value={value}
               onSelect={(selected) => {
@@ -348,17 +357,21 @@ function PropertyChipOptions({ children }: { children: ReactNode }) {
 function PropertyComboOptions({
   disabled,
   onSelect,
+  query,
   suggestions,
   value,
 }: {
   disabled: boolean
   onSelect: (option: string) => void
+  query: string
   suggestions: readonly string[]
   value: string
 }) {
+  const options = filterMobilePropertyComboOptions({ options: suggestions, query })
+
   return (
     <View style={styles.propertyComboBox}>
-      {suggestions.map((option) => {
+      {options.map((option) => {
         const isSelected = isMobileNotePropertySelected({ current: value, option })
 
         return (
@@ -379,6 +392,7 @@ function PropertyComboOptions({
           </Pressable>
         )
       })}
+      {options.length === 0 ? <Text style={styles.propertyComboEmpty}>No matching types.</Text> : null}
     </View>
   )
 }
@@ -445,12 +459,15 @@ function commitTextValue({
   current,
   next,
   onCommit,
+  onSettled,
 }: {
   current: string
   next: string
   onCommit: (value: string) => void
+  onSettled?: (value: string) => void
 }) {
   const normalized = next.trim()
+  onSettled?.(normalized)
   if (normalized !== current) {
     onCommit(normalized)
   }
