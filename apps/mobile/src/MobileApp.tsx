@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   FlatList,
   Pressable,
@@ -10,6 +10,7 @@ import {
 import {
   PanGestureHandler,
   State,
+  type PanGestureHandlerGestureEvent,
   type PanGestureHandlerStateChangeEvent,
 } from 'react-native-gesture-handler'
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context'
@@ -51,7 +52,6 @@ import {
 } from './compactNavigation'
 import { NamedIcon, type IconName } from './NamedIcon'
 import { SwipeSurface } from './SwipeSurface'
-import { detectHorizontalSwipe, type SwipeDirection } from './compactGestures'
 import { styles } from './styles'
 import { colors } from './theme'
 import { MobileEditorBreadcrumb } from './MobileEditorBreadcrumb'
@@ -78,6 +78,15 @@ import { defaultMobileVaultMetadata, type MobileVaultMetadata } from './mobileVa
 import type { MobileVaultRuntime } from './mobileVaultRuntime'
 import { useMobileVaultRuntimeLoader } from './useMobileVaultRuntimeLoader'
 import type { MobileNotePropertyPatch } from './mobileNoteProperties'
+import {
+  defaultTabletPanelWidths,
+  isTabletPanelVisible,
+  nextLeftPanelToReveal,
+  snappedTabletPanelWidth,
+  tabletPanelMaxWidth,
+  tabletPanelWidthDuringDrag,
+  type TabletPanelKey,
+} from './tabletPanelLayout'
 import { useMobileGitSyncFlow } from './useMobileGitSyncFlow'
 import { useMobileAiSettingsFlow } from './useMobileAiSettingsFlow'
 import { createNativeIsomorphicMobileGitTransport } from './mobileNativeIsomorphicGitTransport'
@@ -398,47 +407,76 @@ function MobileAppShell(props: MobileAppShellProps) {
 }
 
 function TabletShell(props: MobileAppShellProps) {
-  const [layout, setLayout] = useState({ list: true, right: true, sidebar: true })
-  const openLeftPanel = () => {
-    setLayout((current) => current.list ? { ...current, sidebar: true } : { ...current, list: true })
+  const [panelWidths, setPanelWidths] = useState(defaultTabletPanelWidths)
+  const dragStartRef = useRef<{ panel: TabletPanelKey; width: number } | null>(null)
+  const leftRevealPanel = nextLeftPanelToReveal(panelWidths)
+  const showSidebar = isTabletPanelVisible(panelWidths.sidebar)
+  const showList = isTabletPanelVisible(panelWidths.list)
+  const showRightPanel = props.showsProperties && isTabletPanelVisible(panelWidths.right)
+  const openRightPanel = () => openTabletPanel({ panel: 'right', setPanelWidths })
+  const handlePanelDragStart = (panel: TabletPanelKey) => {
+    dragStartRef.current = { panel, width: panelWidths[panel] }
   }
-  const openRightPanel = () => setLayout((current) => ({ ...current, right: true }))
-  const closeSidebar = () => setLayout((current) => ({ ...current, sidebar: false }))
-  const closeList = () => setLayout((current) => ({ ...current, list: false }))
-  const closeRightPanel = () => setLayout((current) => ({ ...current, right: false }))
-  const showRightPanel = props.showsProperties && layout.right
+  const handlePanelDrag = (panel: TabletPanelKey, translationX: number) => {
+    resizeTabletPanel({ dragStart: dragStartRef.current, panel, setPanelWidths, translationX })
+  }
+  const handlePanelDragEnd = (panel: TabletPanelKey, sample: TabletPanelDragEndSample) => {
+    snapTabletPanel({ dragStart: dragStartRef.current, panel, sample, setPanelWidths })
+    dragStartRef.current = null
+  }
 
   return (
     <View style={styles.tabletShell}>
-      {!layout.sidebar || !layout.list ? <TabletPanelDragHandle onSwipeRight={openLeftPanel} /> : null}
-      {layout.sidebar ? (
+      {leftRevealPanel ? (
+        <TabletPanelDragHandle
+          panel={leftRevealPanel}
+          onDrag={handlePanelDrag}
+          onDragEnd={handlePanelDragEnd}
+          onDragStart={handlePanelDragStart}
+        />
+      ) : null}
+      {showSidebar ? (
         <>
-          <SidebarPanel
-            activeVault={props.activeVault}
-            activeSelection={props.sidebarSelection}
-            sections={props.sidebarSections}
-            onOpenRemoteSetup={props.onOpenRemoteSetup}
-            onSelect={props.onSelectSidebar}
+          <View style={[styles.tabletPanelSlot, { width: panelWidths.sidebar }]}>
+            <SidebarPanel
+              activeVault={props.activeVault}
+              activeSelection={props.sidebarSelection}
+              sections={props.sidebarSections}
+              onOpenRemoteSetup={props.onOpenRemoteSetup}
+              onSelect={props.onSelectSidebar}
+            />
+          </View>
+          <TabletPanelDragHandle
+            panel="sidebar"
+            onDrag={handlePanelDrag}
+            onDragEnd={handlePanelDragEnd}
+            onDragStart={handlePanelDragStart}
           />
-          <TabletPanelDragHandle onSwipeLeft={closeSidebar} />
         </>
       ) : null}
-      {layout.list ? (
+      {showList ? (
         <>
-          <NoteListPanel
-            gitSyncPlan={props.gitSyncPlan}
-            listTitle={props.listTitle}
-            notes={props.notes}
-            selectedNoteId={props.selectedNoteId}
-            createNoteFailed={props.createNoteFailed}
-            isCreatingNote={props.isCreatingNote}
-            runtimeLoadFailed={props.runtimeLoadFailed}
-            onCreateNote={props.onCreateNote}
-            onGitSyncAction={props.onGitSyncAction}
-            onRetryRuntimeLoad={props.onRetryRuntimeLoad}
-            onSelectNote={props.onSelectNote}
+          <View style={[styles.tabletPanelSlot, { width: panelWidths.list }]}>
+            <NoteListPanel
+              gitSyncPlan={props.gitSyncPlan}
+              listTitle={props.listTitle}
+              notes={props.notes}
+              selectedNoteId={props.selectedNoteId}
+              createNoteFailed={props.createNoteFailed}
+              isCreatingNote={props.isCreatingNote}
+              runtimeLoadFailed={props.runtimeLoadFailed}
+              onCreateNote={props.onCreateNote}
+              onGitSyncAction={props.onGitSyncAction}
+              onRetryRuntimeLoad={props.onRetryRuntimeLoad}
+              onSelectNote={props.onSelectNote}
+            />
+          </View>
+          <TabletPanelDragHandle
+            panel="list"
+            onDrag={handlePanelDrag}
+            onDragEnd={handlePanelDragEnd}
+            onDragStart={handlePanelDragStart}
           />
-          <TabletPanelDragHandle onSwipeLeft={closeList} />
         </>
       ) : null}
       <EditorPanel
@@ -465,52 +503,113 @@ function TabletShell(props: MobileAppShellProps) {
       />
       {showRightPanel ? (
         <>
-          <TabletPanelDragHandle onSwipeRight={closeRightPanel} />
-          <TabletRightPanel {...props} />
+          <TabletPanelDragHandle
+            panel="right"
+            onDrag={handlePanelDrag}
+            onDragEnd={handlePanelDragEnd}
+            onDragStart={handlePanelDragStart}
+          />
+          <View style={[styles.tabletPanelSlot, { width: panelWidths.right }]}>
+            <TabletRightPanel {...props} />
+          </View>
         </>
-      ) : <TabletPanelDragHandle onSwipeLeft={openRightPanel} />}
+      ) : (
+        <TabletPanelDragHandle
+          panel="right"
+          onDrag={handlePanelDrag}
+          onDragEnd={handlePanelDragEnd}
+          onDragStart={handlePanelDragStart}
+        />
+      )}
     </View>
   )
 }
 
 function TabletPanelDragHandle({
-  onSwipeLeft,
-  onSwipeRight,
+  onDrag,
+  onDragEnd,
+  onDragStart,
+  panel,
 }: {
-  onSwipeLeft?: () => void
-  onSwipeRight?: () => void
+  onDrag: (panel: TabletPanelKey, translationX: number) => void
+  onDragEnd: (panel: TabletPanelKey, sample: TabletPanelDragEndSample) => void
+  onDragStart: (panel: TabletPanelKey) => void
+  panel: TabletPanelKey
 }) {
+  const handleGesture = (event: PanGestureHandlerGestureEvent) => {
+    onDrag(panel, event.nativeEvent.translationX)
+  }
   const handleStateChange = (event: PanGestureHandlerStateChangeEvent) => {
-    if (event.nativeEvent.state !== State.END) {
-      return
+    if (event.nativeEvent.state === State.BEGAN) {
+      onDragStart(panel)
     }
-
-    const direction = detectHorizontalSwipe(event.nativeEvent)
-    handleTabletPanelSwipe({ direction, onSwipeLeft, onSwipeRight })
+    if (event.nativeEvent.state === State.END) {
+      onDragEnd(panel, event.nativeEvent)
+    }
   }
 
   return (
-    <PanGestureHandler activeOffsetX={[-8, 8]} failOffsetY={[-24, 24]} onHandlerStateChange={handleStateChange}>
+    <PanGestureHandler
+      activeOffsetX={[-4, 4]}
+      failOffsetY={[-24, 24]}
+      onGestureEvent={handleGesture}
+      onHandlerStateChange={handleStateChange}
+    >
       <View style={styles.tabletPanelDragHandle} />
     </PanGestureHandler>
   )
 }
 
-function handleTabletPanelSwipe({
-  direction,
-  onSwipeLeft,
-  onSwipeRight,
+type TabletPanelDragEndSample = {
+  translationX: number
+  velocityX: number
+}
+
+function openTabletPanel({
+  panel,
+  setPanelWidths,
 }: {
-  direction: SwipeDirection | null
-  onSwipeLeft?: () => void
-  onSwipeRight?: () => void
+  panel: TabletPanelKey
+  setPanelWidths: React.Dispatch<React.SetStateAction<typeof defaultTabletPanelWidths>>
 }) {
-  if (direction === 'left') {
-    onSwipeLeft?.()
-  }
-  if (direction === 'right') {
-    onSwipeRight?.()
-  }
+  setPanelWidths((current) => ({ ...current, [panel]: tabletPanelMaxWidth(panel) }))
+}
+
+function resizeTabletPanel({
+  dragStart,
+  panel,
+  setPanelWidths,
+  translationX,
+}: {
+  dragStart: { panel: TabletPanelKey; width: number } | null
+  panel: TabletPanelKey
+  setPanelWidths: React.Dispatch<React.SetStateAction<typeof defaultTabletPanelWidths>>
+  translationX: number
+}) {
+  const startWidth = dragStart?.panel === panel ? dragStart.width : 0
+  setPanelWidths((current) => ({
+    ...current,
+    [panel]: tabletPanelWidthDuringDrag({ panel, startWidth, translationX }),
+  }))
+}
+
+function snapTabletPanel({
+  dragStart,
+  panel,
+  sample,
+  setPanelWidths,
+}: {
+  dragStart: { panel: TabletPanelKey; width: number } | null
+  panel: TabletPanelKey
+  sample: TabletPanelDragEndSample
+  setPanelWidths: React.Dispatch<React.SetStateAction<typeof defaultTabletPanelWidths>>
+}) {
+  const startWidth = dragStart?.panel === panel ? dragStart.width : 0
+  const width = tabletPanelWidthDuringDrag({ panel, startWidth, translationX: sample.translationX })
+  setPanelWidths((current) => ({
+    ...current,
+    [panel]: snappedTabletPanelWidth({ panel, velocityX: sample.velocityX, width }),
+  }))
 }
 
 function TabletRightPanel(props: MobileAppShellProps) {

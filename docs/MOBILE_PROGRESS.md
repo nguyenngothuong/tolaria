@@ -488,3 +488,11 @@ Continue Phase 4 as a quality remediation pass before new feature work:
 - `pnpm --filter @tolaria/mobile typecheck` passed.
 - `pnpm --filter @tolaria/mobile test` passed: 59 files / 194 tests.
 - `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export-wikilink-pass` passed.
+
+## 2026-05-14 iPad Panel Drag Follow-Up
+
+- Replaced boolean-only iPad panel swipe toggles with live numeric panel widths so sidebar, note list, and right panel resize while dragging and snap open/closed on release.
+- Added tablet panel layout tests covering left-panel resizing, right-panel resizing, velocity/width snapping, and left-edge reveal order.
+- `pnpm --filter @tolaria/mobile typecheck` passed.
+- `pnpm --filter @tolaria/mobile test -- src/tabletPanelLayout.test.ts src/compactGestures.test.ts` passed; the mobile test runner executed 60 files / 198 tests.
+- `pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-export-panel-drag` passed.

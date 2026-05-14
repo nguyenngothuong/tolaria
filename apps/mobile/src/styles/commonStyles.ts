@@ -12,10 +12,13 @@ export const commonStyles = StyleSheet.create({
     backgroundColor: colors.canvas,
   },
   tabletPanelDragHandle: {
-    width: 10,
+    width: 14,
     borderLeftColor: colors.border,
     borderLeftWidth: StyleSheet.hairlineWidth,
     backgroundColor: colors.appBackground,
+  },
+  tabletPanelSlot: {
+    overflow: 'hidden',
   },
   toolbar: {
     minHeight: 58,
