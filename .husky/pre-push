@@ -105,7 +105,7 @@ else
 fi
 require_main_push
 ensure_node_tooling
-ensure_cargo_tooling
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 START_TIME=$(date +%s)
 
@@ -118,6 +118,7 @@ PUSH_TARGET=$(git rev-parse @{push} 2>/dev/null || echo "")
 RUST_CHANGED=true
 APP_CHANGED=true
 SITE_CHANGED=false
+CHANGED=""
 
 if [ -n "$PUSH_TARGET" ]; then
   CHANGED=$(git diff --name-only "$PUSH_TARGET"..HEAD)
@@ -137,7 +138,110 @@ if [ -n "$PUSH_TARGET" ]; then
         ;;
     esac
   done
+else
+  CHANGED=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git ls-files)
 fi
+
+if [ "$CURRENT_BRANCH" = "mobile-ui-foundation" ] && [ "${TOLARIA_MOBILE_FULL_GATE:-0}" != "1" ]; then
+  echo ""
+  echo "📱 Mobile UI foundation fast lane"
+  echo "   Running scoped experimental checks only."
+  echo "   Set TOLARIA_MOBILE_FULL_GATE=1 for the full desktop/native release gate."
+
+  MOBILE_CHANGED=false
+  HOOK_CHANGED=false
+  OTHER_CODE_CHANGED=false
+
+  for FILE in $CHANGED; do
+    case "$FILE" in
+      apps/mobile/*|package.json|pnpm-lock.yaml|pnpm-workspace.yaml)
+        MOBILE_CHANGED=true
+        ;;
+      .husky/*)
+        HOOK_CHANGED=true
+        ;;
+      .github/*|docs/*|*.md)
+        ;;
+      *)
+        OTHER_CODE_CHANGED=true
+        ;;
+    esac
+  done
+
+  if [ "$HOOK_CHANGED" = true ]; then
+    echo ""
+    echo "🔧 Hook syntax..."
+    sh -n .husky/pre-commit
+    sh -n .husky/pre-push
+    echo "  ✅ Hook syntax OK"
+  fi
+
+  if [ "$MOBILE_CHANGED" = true ]; then
+    echo ""
+    echo "🔎 Mobile lint..."
+    pnpm mobile:lint --quiet
+    echo "  ✅ Mobile lint OK"
+
+    echo ""
+    echo "📦 Mobile TypeScript..."
+    pnpm mobile:typecheck
+    echo "  ✅ Mobile TypeScript OK"
+
+    echo ""
+    echo "🧪 Mobile tests..."
+    pnpm mobile:test
+    echo "  ✅ Mobile tests OK"
+
+    echo ""
+    echo "🖼️  Expo web export..."
+    pnpm mobile:export:web
+    echo "  ✅ Expo web export OK"
+  else
+    echo ""
+    echo "⏭️  Mobile checks skipped (no apps/mobile or workspace package changes)"
+  fi
+
+  if [ "$OTHER_CODE_CHANGED" = true ]; then
+    echo ""
+    echo "  ⚠️  Non-mobile production files changed on mobile-ui-foundation."
+    echo "     Fast lane intentionally skipped desktop build, root coverage, Rust coverage, and Playwright smoke."
+    echo "     Run TOLARIA_MOBILE_FULL_GATE=1 git push before promoting this branch."
+  fi
+
+  if [ -n "$CODESCENE_PAT" ] && [ -n "$CODESCENE_PROJECT_ID" ]; then
+    THRESHOLDS_FILE="$(git rev-parse --show-toplevel)/.codescene-thresholds"
+    HOTSPOT_MIN=9.45
+    AVERAGE_MIN=9.29
+    if [ -f "$THRESHOLDS_FILE" ]; then
+      HOTSPOT_MIN=$(grep HOTSPOT_THRESHOLD "$THRESHOLDS_FILE" | cut -d= -f2)
+      AVERAGE_MIN=$(grep AVERAGE_THRESHOLD "$THRESHOLDS_FILE" | cut -d= -f2)
+    fi
+    echo ""
+    echo "🏥 CodeScene project snapshot..."
+    API_RESPONSE=$(curl -sf \
+      -H "Authorization: Bearer $CODESCENE_PAT" \
+      -H "Accept: application/json" \
+      "https://api.codescene.io/v2/projects/$CODESCENE_PROJECT_ID" 2>/dev/null || echo "{}")
+    HOTSPOT_SCORE=$(echo "$API_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['analysis']['hotspot_code_health']['now'])" 2>/dev/null || echo "")
+    AVERAGE_SCORE=$(echo "$API_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['analysis']['code_health']['now'])" 2>/dev/null || echo "")
+    if [ -n "$HOTSPOT_SCORE" ] && [ -n "$AVERAGE_SCORE" ]; then
+      echo "  Hotspot Code Health: $HOTSPOT_SCORE (threshold: $HOTSPOT_MIN)"
+      echo "  Average Code Health: $AVERAGE_SCORE (threshold: $AVERAGE_MIN)"
+    else
+      echo "  ⚠️  Could not fetch CodeScene scores"
+    fi
+  else
+    echo ""
+    echo "🏥 CodeScene project snapshot skipped (CODESCENE_PAT or CODESCENE_PROJECT_ID missing)"
+  fi
+
+  ELAPSED=$(($(date +%s) - START_TIME))
+  echo ""
+  echo "✅ Mobile fast pre-push passed in ${ELAPSED}s"
+  exit 0
+fi
+
+ensure_cargo_tooling
 
 if [ "$APP_CHANGED" = false ]; then
   if [ "$SITE_CHANGED" = true ]; then

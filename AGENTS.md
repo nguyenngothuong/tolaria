@@ -16,9 +16,10 @@
 ### Commits & pushes
 
 - Push directly to `main` — no PRs, no branches. Pre-push blocks non-`main` pushes.
-- Exception: long-lived mobile UI foundation work may use `mobile-ui-foundation` and push only to `origin/mobile-ui-foundation`, with normal verified hooks still required.
+- Exception: long-lived mobile UI foundation work may use `mobile-ui-foundation` and push only to `origin/mobile-ui-foundation`.
+- On `mobile-ui-foundation`, optimize for fast experimental UI iteration. Routine hooks run only scoped mobile checks (`mobile:lint`, `mobile:typecheck`, `mobile:test`, and Expo web export on push). Do not run the full Tolaria desktop/native suite after every UI iteration.
 - Commit every 20–30 min: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`
-- Pre-push hook runs full check suite (build + tests + core Playwright smoke + CodeScene)
+- Production pre-push runs the full check suite (build + tests + core Playwright smoke + CodeScene). The mobile foundation branch uses its scoped fast lane unless `TOLARIA_MOBILE_FULL_GATE=1` is set.
 - **A task is NOT done until `git push origin main` succeeds.** If the hook blocks: read the error, fix it (clippy, tests, CodeScene, build), commit the fix, push again. **⛔ NEVER use --no-verify**
 
 ### TDD (mandatory)
@@ -71,7 +72,7 @@ Use Codacy as a security and static-analysis gate before a task is considered re
 - Review Medium findings. Fix them when they are real defects or security-sensitive; otherwise explain why they are acceptable in the completion comment.
 - Never silence a Codacy rule just to pass the scan. Prefer small code changes that remove the finding.
 
-### Check suite (runs on every push)
+### Check suite (runs on every production push)
 ```bash
 pnpm lint && npx tsc --noEmit && pnpm test && pnpm test:coverage  # frontend ≥70%
 cargo test && cargo llvm-cov --manifest-path src-tauri/Cargo.toml --no-clean --fail-under-lines 85
@@ -82,6 +83,8 @@ Coverage is a release gate, not a vanity metric:
 - Rust line coverage must stay ≥85%.
 - For bug fixes, add a regression test when practical.
 - For new behavior, add targeted coverage close to the changed code; do not rely only on broad E2E coverage.
+
+For `mobile-ui-foundation`, run the full production gate only before promotion/merge/release-readiness by pushing with `TOLARIA_MOBILE_FULL_GATE=1`. During exploratory mobile UI work, use incremental mobile checks and visual QA so development does not stall on unrelated desktop/native coverage.
 
 ### UI and native QA
 

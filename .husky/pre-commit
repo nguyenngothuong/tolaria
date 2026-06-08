@@ -69,17 +69,57 @@ if [ "$APP_CHANGED" = false ]; then
   exit 0
 fi
 
-# Lint + types (only if TS files staged)
-STAGED_TS=$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx)$' || true)
-if [ -n "$STAGED_TS" ]; then
-  echo "  → lint + tsc..."
-  pnpm lint --quiet
-  npx tsc --noEmit
-fi
+if [ "$CURRENT_BRANCH" = "mobile-ui-foundation" ]; then
+  MOBILE_CHANGED=false
+  HOOK_CHANGED=false
+  OTHER_CODE_CHANGED=false
 
-# Unit tests
-echo "  → tests..."
-pnpm exec vitest run --silent
+  for FILE in $STAGED_FILES; do
+    case "$FILE" in
+      apps/mobile/*|package.json|pnpm-lock.yaml|pnpm-workspace.yaml)
+        MOBILE_CHANGED=true
+        ;;
+      .husky/*)
+        HOOK_CHANGED=true
+        ;;
+      .github/*|docs/*|*.md)
+        ;;
+      *)
+        OTHER_CODE_CHANGED=true
+        ;;
+    esac
+  done
+
+  if [ "$HOOK_CHANGED" = true ]; then
+    echo "  → hook syntax..."
+    sh -n .husky/pre-commit
+    sh -n .husky/pre-push
+  fi
+
+  if [ "$MOBILE_CHANGED" = true ]; then
+    echo "  → mobile lint + typecheck + tests..."
+    pnpm mobile:lint --quiet
+    pnpm mobile:typecheck
+    pnpm mobile:test
+  fi
+
+  if [ "$OTHER_CODE_CHANGED" = true ]; then
+    echo "  ⚠️  Non-mobile production files are staged on mobile-ui-foundation."
+    echo "     Fast mobile hook did not run the full desktop/native suite."
+  fi
+else
+  # Lint + types (only if TS files staged)
+  STAGED_TS=$(echo "$STAGED_FILES" | grep -E '\.(ts|tsx)$' || true)
+  if [ -n "$STAGED_TS" ]; then
+    echo "  → lint + tsc..."
+    pnpm lint --quiet
+    npx tsc --noEmit
+  fi
+
+  # Unit tests
+  echo "  → tests..."
+  pnpm exec vitest run --silent
+fi
 
 echo "✅ Pre-commit passed"
 
