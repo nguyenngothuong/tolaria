@@ -28,9 +28,10 @@ require_main_branch() {
   fi
 
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-  if [ "$CURRENT_BRANCH" != "main" ]; then
+  if [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "mobile-ui-foundation" ]; then
     echo "❌ Commits must happen on main. Current branch: $CURRENT_BRANCH"
-    echo "   Merge or cherry-pick your work onto main, then commit there."
+    echo "   Long-lived mobile UI foundation work is allowed on mobile-ui-foundation."
+    echo "   Otherwise merge or cherry-pick your work onto main, then commit there."
     exit 1
   fi
 }

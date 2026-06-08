@@ -16,8 +16,8 @@ The hooks expect `node` and `pnpm` to be available. If they are installed via `n
 
 ## Policy
 
-- Commit on `main` only.
-- Push from `main` to `origin/main` only.
+- Commit on `main` only, except the long-lived mobile UI foundation branch `mobile-ui-foundation`.
+- Push from `main` to `origin/main` only, except `mobile-ui-foundation` to `origin/mobile-ui-foundation`.
 - Never use `--no-verify`.
 - `.codescene-thresholds` is a ratchet. It can only move up.
 
@@ -25,7 +25,7 @@ The hooks expect `node` and `pnpm` to be available. If they are installed via `n
 
 `.husky/pre-commit` blocks commits unless all of the following are true:
 
-- `HEAD` is attached to `main`
+- `HEAD` is attached to `main` or `mobile-ui-foundation`
 - staged TypeScript files pass `pnpm lint --quiet`
 - TypeScript passes `npx tsc --noEmit`
 - frontend tests pass via `pnpm test --run --silent`
@@ -37,8 +37,8 @@ If `CODESCENE_PAT` or `CODESCENE_PROJECT_ID` is missing, the CodeScene portion i
 
 `.husky/pre-push` blocks pushes unless all of the following are true:
 
-- the current branch is `main`
-- every pushed branch ref is `refs/heads/main -> refs/heads/main`
+- the current branch is `main` or `mobile-ui-foundation`
+- every pushed branch ref is `refs/heads/main -> refs/heads/main` or `refs/heads/mobile-ui-foundation -> refs/heads/mobile-ui-foundation`
 - TypeScript and the Vite build pass
 - frontend coverage passes
 - Rust lint and Rust coverage pass when `src-tauri/` changed

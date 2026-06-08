@@ -58,6 +58,25 @@ The frontmatter parser (Rust: `vault/mod.rs`, TS: `utils/frontmatter.ts`) must f
 
 All data lives in markdown files with YAML frontmatter. There is no database — the filesystem is the source of truth.
 
+## Mobile UI Foundation
+
+The React Native app in `apps/mobile` has its own UI abstraction layer. Mobile screens should compose Tolaria-native primitives from `apps/mobile/src/ui` instead of directly styling raw React Native controls in feature screens.
+
+Current primitives:
+
+| Primitive | Purpose |
+|---|---|
+| `MobileButton` | Text or icon+text actions with Tolaria variants |
+| `MobileIconButton` | Toolbar and compact icon actions |
+| `MobilePanel` / `MobileToolbar` | Sidebar, note-list, editor, and properties structure |
+| `MobileListRow` | Dense note-list rows with selected state, metadata, and chips |
+| `MobileChip` | Type, tag, and relationship labels |
+| `MobilePropertyRow` | Properties panel label/value rows |
+
+Mobile UI copy should reuse the localization catalog in `src/lib/locales/en.json` whenever the desktop concept already exists. New mobile-specific copy must be added to that catalog and translated through the normal Lara workflow.
+
+The mobile UI lab uses fixture data until a surface has passed visual and interaction QA. Vault storage, editor, Git, and sync logic should be wired only after the corresponding native shell has a stable fixture state and screenshot target.
+
 ### Vault Git Capability
 
 Git is a per-vault capability, not a prerequisite for the document model. A vault can be:

@@ -132,6 +132,7 @@ The note list opportunistically preloads visible and adjacent markdown/text entr
 |-------|-----------|---------|
 | Desktop shell | Tauri v2 | 2.10.0 |
 | Frontend | React + TypeScript | React 19, TS 5.9 |
+| Mobile shell | Expo React Native | Expo 56, React Native 0.85 |
 | Editor | BlockNote | 0.46.2 |
 | Code block highlighting | @blocknote/code-block | 0.46.2 |
 | Additional code grammars | @shikijs/langs | 3.23.0 |
@@ -140,6 +141,7 @@ The note list opportunistically preloads visible and adjacent markdown/text entr
 | Raw editor | CodeMirror 6 | - |
 | Styling | Tailwind CSS v4 + CSS variables | 4.1.18 |
 | UI primitives | Radix UI + shadcn/ui | - |
+| Mobile UI primitives | React Native Tolaria primitives in `apps/mobile/src/ui` | - |
 | Icons | Phosphor Icons | - |
 | Build | Vite | 7.3.1 |
 | Backend language | Rust (edition 2021) | 1.77.2 |
@@ -151,6 +153,12 @@ The note list opportunistically preloads visible and adjacent markdown/text entr
 | MCP | @modelcontextprotocol/sdk | 1.0 |
 | Tests | Vitest (unit), Playwright (E2E/smoke), cargo test (Rust) | - |
 | Package manager | pnpm | - |
+
+### Mobile App Foundation
+
+The mobile app lives in `apps/mobile` as a separate Expo React Native workspace package. It is intentionally not a port of the desktop React DOM component tree. Desktop components, CSS variables, and panel semantics are treated as the reference contract, while mobile uses native primitives and fixture-driven screens.
+
+The first mobile surface is a UI lab, not production vault wiring. `apps/mobile/src/ui` owns native Tolaria primitives such as buttons, icon buttons, panels, toolbars, list rows, chips, and property rows. `apps/mobile/src/screens` composes those primitives into tablet and later phone shell fixtures. This keeps UI quality work deterministic: each mobile surface can be rendered, clicked, screenshot-tested, and compared against the desktop visual language before storage/editor/Git behavior is attached.
 
 ## System Overview
 

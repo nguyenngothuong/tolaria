@@ -1,0 +1,87 @@
+import type { ReactNode } from 'react'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { mobileColors, mobileSpace, mobileType } from './tokens'
+
+export function MobileListRow({
+  chips,
+  meta,
+  onPress,
+  selected = false,
+  subtitle,
+  title,
+  trailing,
+}: {
+  chips?: ReactNode
+  meta?: string
+  onPress?: () => void
+  selected?: boolean
+  subtitle: string
+  title: string
+  trailing?: ReactNode
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.base,
+        selected ? styles.selected : null,
+        pressed ? styles.pressed : null,
+      ]}
+    >
+      <View style={styles.header}>
+        <Text numberOfLines={1} style={styles.title}>{title}</Text>
+        {trailing}
+      </View>
+      <Text numberOfLines={2} style={styles.subtitle}>{subtitle}</Text>
+      <View style={styles.footer}>
+        {chips}
+        {meta ? <Text style={styles.meta}>{meta}</Text> : null}
+      </View>
+    </Pressable>
+  )
+}
+
+const styles = StyleSheet.create({
+  base: {
+    borderBottomColor: mobileColors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: mobileSpace.lg,
+    paddingVertical: mobileSpace.md,
+  },
+  footer: {
+    marginTop: mobileSpace.md,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: mobileSpace.sm,
+  },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: mobileSpace.sm,
+  },
+  meta: {
+    color: mobileColors.textMuted,
+    fontSize: mobileType.caption,
+  },
+  pressed: {
+    opacity: 0.72,
+  },
+  selected: {
+    backgroundColor: mobileColors.selected,
+    borderLeftColor: mobileColors.primary,
+    borderLeftWidth: 3,
+  },
+  subtitle: {
+    marginTop: mobileSpace.sm,
+    color: mobileColors.textMuted,
+    fontSize: mobileType.body,
+    lineHeight: 20,
+  },
+  title: {
+    flex: 1,
+    color: mobileColors.text,
+    fontSize: mobileType.bodyLarge,
+    fontWeight: '700',
+  },
+})

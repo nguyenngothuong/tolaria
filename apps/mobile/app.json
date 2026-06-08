@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Tolaria Mobile",
+    "slug": "tolaria-mobile",
+    "scheme": "tolaria",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tolaria.mobile.dev"
+    },
+    "android": {
+      "package": "com.tolaria.mobile.dev"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

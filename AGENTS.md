@@ -16,6 +16,7 @@
 ### Commits & pushes
 
 - Push directly to `main` — no PRs, no branches. Pre-push blocks non-`main` pushes.
+- Exception: long-lived mobile UI foundation work may use `mobile-ui-foundation` and push only to `origin/mobile-ui-foundation`, with normal verified hooks still required.
 - Commit every 20–30 min: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`
 - Pre-push hook runs full check suite (build + tests + core Playwright smoke + CodeScene)
 - **A task is NOT done until `git push origin main` succeeds.** If the hook blocks: read the error, fix it (clippy, tests, CodeScene, build), commit the fix, push again. **⛔ NEVER use --no-verify**
