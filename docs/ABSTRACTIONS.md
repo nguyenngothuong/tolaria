@@ -77,6 +77,8 @@ Mobile UI copy should reuse the localization catalog in `src/lib/locales/en.json
 
 The mobile UI lab uses fixture data until a surface has passed visual and interaction QA. Vault storage, editor, Git, and sync logic should be wired only after the corresponding native shell has a stable fixture state and screenshot target.
 
+`docs/MOBILE-UI-PARITY.md` is the working checklist for mobile surface parity. `pnpm mobile:qa:screenshots` is the fast visual QA command for this branch: it exports the Expo web bundle, serves it locally, and captures tablet/phone screenshots for the UI lab without running the full desktop/native Tolaria suite.
+
 ### Vault Git Capability
 
 Git is a per-vault capability, not a prerequisite for the document model. A vault can be:

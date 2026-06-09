@@ -19,6 +19,7 @@
     "mobile:lint": "eslint apps/mobile --max-warnings=0",
     "mobile:export:web": "pnpm --filter @tolaria/mobile exec expo export --platform web --output-dir /tmp/tolaria-mobile-ui-web",
     "mobile:export:ios": "pnpm --filter @tolaria/mobile exec expo export --platform ios --output-dir /tmp/tolaria-mobile-ui-ios",
+    "mobile:qa:screenshots": "pnpm mobile:export:web && playwright test --config apps/mobile/playwright.config.ts",
     "mobile:start": "pnpm --filter @tolaria/mobile start",
     "mobile:ios": "pnpm --filter @tolaria/mobile ios",
     "mobile:typecheck": "pnpm --filter @tolaria/mobile typecheck",

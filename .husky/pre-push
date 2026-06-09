@@ -193,9 +193,9 @@ if [ "$CURRENT_BRANCH" = "mobile-ui-foundation" ] && [ "${TOLARIA_MOBILE_FULL_GA
     echo "  ✅ Mobile tests OK"
 
     echo ""
-    echo "🖼️  Expo web export..."
-    pnpm mobile:export:web
-    echo "  ✅ Expo web export OK"
+    echo "🖼️  Mobile screenshot QA..."
+    pnpm mobile:qa:screenshots
+    echo "  ✅ Mobile screenshot QA OK"
   else
     echo ""
     echo "⏭️  Mobile checks skipped (no apps/mobile or workspace package changes)"

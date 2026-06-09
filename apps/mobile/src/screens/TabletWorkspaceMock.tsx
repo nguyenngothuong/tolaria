@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FileText, MagnifyingGlass, Plus, SidebarSimple, Star } from 'phosphor-react-native'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import { fixtureEditorBullets, fixtureNotes } from '../fixtures/workspaceFixtures'
 import { mobileCopy } from '../i18n/mobileText'
 import { MobileButton } from '../ui/MobileButton'
@@ -12,12 +12,14 @@ import { MobilePropertyRow } from '../ui/MobilePropertyRow'
 import { mobileColors, mobileSpace, mobileType } from '../ui/tokens'
 
 export function TabletWorkspaceMock() {
+  const { width } = useWindowDimensions()
   const [selectedNoteId, setSelectedNoteId] = useState(fixtureNotes[0].id)
   const selectedNote = fixtureNotes.find((note) => note.id === selectedNoteId) ?? fixtureNotes[0]
+  const showSidebar = width >= 1180
 
   return (
     <View style={styles.shell}>
-      <SidebarPanel />
+      {showSidebar ? <SidebarPanel /> : null}
       <NoteListPanel selectedNoteId={selectedNoteId} onSelectNote={setSelectedNoteId} />
       <EditorPanel noteTitle={selectedNote.title} />
       <PropertiesPanel noteType={selectedNote.type} />
