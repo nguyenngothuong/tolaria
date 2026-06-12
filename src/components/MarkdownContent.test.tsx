@@ -50,6 +50,12 @@ describe('MarkdownContent', () => {
     expect(link.getAttribute('href')).toBe('https://example.com')
   })
 
+  it('renders GFM email autolinks when modern regex features are available', () => {
+    render(<MarkdownContent content="Contact luca@example.com" />)
+    const link = screen.getByRole('link', { name: 'luca@example.com' }) as HTMLAnchorElement
+    expect(link.getAttribute('href')).toBe('mailto:luca@example.com')
+  })
+
   it('renders mixed markdown', () => {
     const { container } = render(<MarkdownContent content={'**Bold** and `code` and\n\n- item'} />)
     expect(screen.getByText('Bold').tagName).toBe('STRONG')
@@ -60,6 +66,11 @@ describe('MarkdownContent', () => {
   it('wraps content in .ai-markdown container', () => {
     const { container } = render(<MarkdownContent content="Hello" />)
     expect(container.querySelector('.ai-markdown')).toBeTruthy()
+  })
+
+  it('constrains markdown to the current chat width', () => {
+    const { container } = render(<MarkdownContent content="Hello" />)
+    expect(container.querySelector('.ai-markdown')).toHaveClass('min-w-0', 'max-w-full', 'overflow-hidden')
   })
 
   it('renders plain text without crashing', () => {
