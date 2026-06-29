@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type {
   DragEventHandler,
   MouseEvent as ReactMouseEvent,
@@ -402,8 +402,11 @@ describe('TolariaSideMenu', () => {
   })
 
   afterEach(() => {
+    cleanup()
     document.elementsFromPoint = originalElementsFromPoint
     document.body.innerHTML = ''
+    document.head.querySelectorAll('style[data-tolaria-collapsed-sections]')
+      .forEach((styleElement) => styleElement.remove())
   })
 
   it('replaces BlockNote block colors with markdown-safe drag-handle items', () => {
@@ -659,6 +662,41 @@ describe('TolariaSideMenu', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Comprimi elemento' }))
 
     expect(screen.getByRole('button', { name: 'Espandi elemento' })).toBeInTheDocument()
+  })
+
+  it('does not subscribe collapsed-heading rendering until something is collapsed', () => {
+    const heading = headingBlock('heading', 2)
+    const paragraph = testBlock('paragraph', 'paragraph', ['Text'])
+    const blocks = [heading, paragraph]
+    mockEditor.document = blocks
+    appendBlockOuters(blocks)
+    mockEditor.getBlock.mockImplementation((id: string) => blocks.find((block) => block.id === id))
+
+    renderSideMenuAndCollapseControllerWithBlock(heading)
+
+    expect(mockEditor.onChange).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse section' }))
+
+    expect(mockEditor.onChange).toHaveBeenCalledTimes(1)
+  })
+
+  it('removes collapsed-heading edit subscriptions after the final section is expanded', () => {
+    const unsubscribeEditorChange = vi.fn()
+    const heading = headingBlock('heading', 2)
+    const paragraph = testBlock('paragraph', 'paragraph', ['Text'])
+    const blocks = [heading, paragraph]
+    mockEditor.document = blocks
+    appendBlockOuters(blocks)
+    mockEditor.getBlock.mockImplementation((id: string) => blocks.find((block) => block.id === id))
+    mockEditor.onChange.mockReturnValue(unsubscribeEditorChange)
+
+    renderSideMenuAndCollapseControllerWithBlock(heading)
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse section' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Expand section' }))
+
+    expect(unsubscribeEditorChange).toHaveBeenCalledTimes(1)
+    expect(collapsedSectionStyleText()).toBe('')
   })
 
   it('hides a collapsed heading section until the next same-level heading', () => {
